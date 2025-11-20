@@ -71,7 +71,8 @@ if (in_array($ext, ['html', 'htm', 'xhtml'])) {
     if ($reldir === '.' || $reldir === '') { $reldir = ''; }
     $dirparam = ($reldir === '') ? '' : ($reldir . '/');
     $baseurl = new moodle_url('/blocks/dspace_integration/serve_epub.php', ['uuid' => $uuid, 'file' => $dirparam]);
-    $base = '<base href="' . $baseurl->out(false) . '">';
+    // Importante: escapar la URL para evitar errores XML (entityref) en XHTML por caracteres como &
+    $base = '<base href="' . s($baseurl->out(false)) . '">';
     if (stripos($html, '<head') !== false) {
         $html = preg_replace('/<head(\b[^>]*)>/i', '<head$1>' . "\n    $base\n", $html, 1);
     } else {
@@ -96,7 +97,8 @@ if (in_array($ext, ['html', 'htm', 'xhtml'])) {
         }
         $normalized = implode('/', $segments);
         $murl = new moodle_url('/blocks/dspace_integration/serve_epub.php', ['uuid' => $uuid, 'file' => $normalized]);
-        return $attr . '="' . $murl->out(false) . '"';
+        // Escapar para que & se convierta a &amp; y no rompa XHTML
+        return $attr . '="' . s($murl->out(false)) . '"';
     };
 
     $patterns = [

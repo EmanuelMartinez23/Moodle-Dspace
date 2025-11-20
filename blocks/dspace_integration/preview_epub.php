@@ -217,8 +217,8 @@ echo $OUTPUT->header();
         $prevurl = new moodle_url('/blocks/dspace_integration/preview_epub.php', ['uuid' => $uuid, 'nav' => max(0, $nav-1)]);
         $nexturl = new moodle_url('/blocks/dspace_integration/preview_epub.php', ['uuid' => $uuid, 'nav' => min($count-1, $nav+1)]);
         ?>
-        <a class="btn" href="<?php echo $prevurl->out(false); ?>" <?php echo $nav<=0 ? 'aria-disabled="true" style="pointer-events:none;opacity:.5;"' : '' ?>>◀ Anterior</a>
-        <a class="btn" href="<?php echo $nexturl->out(false); ?>" <?php echo $nav>=$count-1 ? 'aria-disabled="true" style="pointer-events:none;opacity:.5;"' : '' ?>>▶ Siguiente</a>
+        <a class="btn" href="<?php echo s($prevurl->out(false)); ?>" <?php echo $nav<=0 ? 'aria-disabled="true" style="pointer-events:none;opacity:.5;"' : '' ?>>◀ Anterior</a>
+        <a class="btn" href="<?php echo s($nexturl->out(false)); ?>" <?php echo $nav>=$count-1 ? 'aria-disabled="true" style="pointer-events:none;opacity:.5;"' : '' ?>>▶ Siguiente</a>
         <select id="toc" class="btn" onchange="location.href=this.value;">
             <?php
             for ($i=0; $i<$count; $i++) {
