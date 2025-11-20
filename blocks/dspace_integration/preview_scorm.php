@@ -1,0 +1,238 @@
+<?php
+// Previsualización SCORM "Opción A": sin crear actividad de Moodle.
+// Descarga el ZIP desde DSpace, lo extrae a un directorio temporal y sirve el contenido
+// en un iframe, exponiendo un API SCORM mínimo (stub) para evitar errores de JS.
+
+require_once(__DIR__ . '/../../config.php');
+
+require_login();
+
+global $CFG, $USER, $PAGE, $OUTPUT;
+
+$uuid = optional_param('uuid', '', PARAM_ALPHANUMEXT);
+$serve = optional_param('file', '', PARAM_RAW_TRIMMED); // ruta relativa dentro del paquete a servir
+
+if (empty($uuid)) {
+    print_error('missingparam', 'error', '', 'uuid');
+}
+
+// Directorio de trabajo por usuario y UUID
+$basedir = rtrim($CFG->tempdir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'dspace_scorm';
+$userdir = $basedir . DIRECTORY_SEPARATOR . intval($USER->id);
+$packdir = $userdir . DIRECTORY_SEPARATOR . $uuid;
+
+// Asegurar directorios
+@mkdir($basedir, $CFG->directorypermissions, true);
+@mkdir($userdir, $CFG->directorypermissions, true);
+@mkdir($packdir, $CFG->directorypermissions, true);
+
+// Función utilitaria para limpiar rutas relativas y prevenir traversal
+function dspace_scorm_safepath(string $rel): string {
+    $rel = str_replace(['\\\\', '\\'], '/', $rel);
+    $rel = preg_replace('~^/+~', '', $rel);
+    $parts = [];
+    foreach (explode('/', $rel) as $p) {
+        if ($p === '' || $p === '.') continue;
+        if ($p === '..') { array_pop($parts); continue; }
+        $parts[] = $p;
+    }
+    return implode('/', $parts);
+}
+
+// Descarga y extracción si hace falta
+$manifestpath = $packdir . DIRECTORY_SEPARATOR . 'imsmanifest.xml';
+if (!file_exists($manifestpath)) {
+    // Descargar ZIP desde DSpace
+    $apiUrl  = get_config('block_dspace_integration', 'server');
+    $user    = get_config('block_dspace_integration', 'email');
+    $pass    = get_config('block_dspace_integration', 'password');
+    if (empty($apiUrl) || empty($user) || empty($pass)) {
+        print_error('configdata', 'error', '', 'block_dspace_integration');
+    }
+
+    // Construir URL de descarga pública (similar al proxy, tolerando /server/api)
+    $downloadbase = rtrim($apiUrl, '/');
+    if (preg_match('~/(server/api)$~', $downloadbase)) {
+        $downloadbase = preg_replace('~/(server/api)$~', '', $downloadbase);
+    }
+    $url = $downloadbase . "/bitstreams/{$uuid}/download";
+
+    // Autenticación a DSpace
+    $token = null;
+    $ch = curl_init($apiUrl . '/security/csrf');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    $resp = curl_exec($ch);
+    $csrf = '';
+    if ($resp !== false && preg_match('/DSPACE-XSRF-COOKIE=([^;]+)/', $resp, $m)) {
+        $csrf = $m[1];
+    }
+    curl_close($ch);
+    $ch = curl_init($apiUrl . '/authn/login');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, "user=$user&password=$pass");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "X-XSRF-TOKEN: $csrf",
+        "Cookie: DSPACE-XSRF-COOKIE=$csrf",
+        'Content-Type: application/x-www-form-urlencoded'
+    ]);
+    $resp = curl_exec($ch);
+    if ($resp !== false) {
+        $hs = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $hdr = substr($resp, 0, $hs);
+        if (preg_match('/Authorization:\s*Bearer\s+([^\s]+)/i', $hdr, $m)) {
+            $token = $m[1];
+        }
+    }
+    curl_close($ch);
+    if (empty($token)) {
+        print_error('generalexceptionmessage', 'error', 'No se pudo autenticar en DSpace');
+    }
+
+    // Descargar ZIP
+    $zipfile = $packdir . DIRECTORY_SEPARATOR . 'package.zip';
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, false);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "Authorization: Bearer {$token}",
+        'Accept: */*'
+    ]);
+    $data = curl_exec($ch);
+    if ($data === false) {
+        curl_close($ch);
+        print_error('cannotcreatetempdir', 'error', '', 'Descarga SCORM');
+    }
+    $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    if ($status >= 400) {
+        print_error('errorreadingfile', 'error', '', 'DSpace respondió ' . $status);
+    }
+    file_put_contents($zipfile, $data);
+
+    // Extraer
+    $zip = new ZipArchive();
+    if ($zip->open($zipfile) === true) {
+        $zip->extractTo($packdir);
+        $zip->close();
+    } else {
+        print_error('errorunzippingfiles', 'error');
+    }
+}
+
+// Petición de servir archivos internos del paquete
+if ($serve !== '') {
+    $rel = dspace_scorm_safepath($serve);
+    $full = $packdir . DIRECTORY_SEPARATOR . $rel;
+    if (!file_exists($full) || !is_file($full)) {
+        http_response_code(404);
+        echo 'Not found';
+        exit;
+    }
+    // Content-Type simple por extensión
+    $ext = strtolower(pathinfo($full, PATHINFO_EXTENSION));
+    $mimes = [
+        'html' => 'text/html; charset=utf-8', 'htm' => 'text/html; charset=utf-8',
+        'css' => 'text/css', 'js' => 'application/javascript', 'json' => 'application/json',
+        'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif', 'svg' => 'image/svg+xml',
+        'xml' => 'application/xml', 'xhtml' => 'application/xhtml+xml',
+        'woff' => 'font/woff', 'woff2' => 'font/woff2', 'ttf' => 'font/ttf', 'otf' => 'font/otf',
+        'mp3' => 'audio/mpeg', 'mp4' => 'video/mp4', 'webm' => 'video/webm', 'ogg' => 'audio/ogg'
+    ];
+    $ctype = $mimes[$ext] ?? 'application/octet-stream';
+    header('Content-Type: ' . $ctype);
+    header('Content-Length: ' . filesize($full));
+    readfile($full);
+    exit;
+}
+
+// Determinar el launch file (index.html o el href del primer resource en imsmanifest.xml)
+$launch = 'index.html';
+if (file_exists($manifestpath)) {
+    $xml = @simplexml_load_file($manifestpath);
+    if ($xml) {
+        $resources = $xml->resources->resource ?? null;
+        if ($resources) {
+            foreach ($resources as $res) {
+                $href = (string)$res['href'];
+                if (!empty($href)) { $launch = (string)$href; break; }
+            }
+        }
+    }
+}
+$launch = dspace_scorm_safepath($launch);
+
+// Limpiar temporales antiguos (TTL 1 día) solo en el directorio del usuario
+$ttl = 60 * 60 * 24;
+$now = time();
+foreach (glob($userdir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) as $dir) {
+    if (@filemtime($dir) && ($now - filemtime($dir)) > $ttl) {
+        // Eliminar dir recursivamente
+        $it = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($it as $file) {
+            $file->isDir() ? @rmdir($file->getPathname()) : @unlink($file->getPathname());
+        }
+        @rmdir($dir);
+    }
+}
+
+// Renderizar el visor con iframe
+$PAGE->set_url(new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $uuid]));
+$PAGE->set_context(context_system::instance());
+$PAGE->set_title('Previsualización SCORM');
+$PAGE->set_pagelayout('popup');
+
+echo $OUTPUT->header();
+?>
+<style>
+  html, body { height: 100%; margin: 0; background: #111; }
+  #bar { background:#fff; border-bottom:1px solid #ddd; padding:8px 12px; font-size:14px; display:flex; gap:10px; align-items:center; }
+  #player { position: fixed; top: 40px; bottom: 0; left: 0; right: 0; }
+  #scoframe { width: 100%; height: 100%; border: 0; background: #fff; }
+  .badge { font-size: 12px; color: #6c757d; }
+</style>
+<div id="bar">
+  <strong>SCORM (vista previa)</strong>
+  <span class="badge">No guarda progreso ni calificaciones</span>
+  <span class="badge">Fuente: DSpace UUID <?php echo s($uuid); ?></span>
+  <a class="btn btn-sm btn-secondary" target="_blank" rel="noopener" href="<?php echo new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $uuid, 'file' => $launch]); ?>">Abrir en pestaña nueva</a>
+  <span class="badge">Archivo inicial: <?php echo s($launch); ?></span>
+</div>
+<div id="player">
+  <iframe id="scoframe" src="<?php echo new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $uuid, 'file' => $launch]); ?>" allowfullscreen></iframe>
+</div>
+<script>
+// API SCORM mínimo (1.2 y 2004) para evitar errores en modo vista previa.
+(function(){
+  function noop(){ return "0"; }
+  var data = {};
+  var API12 = {
+    LMSInitialize: function(){ return "true"; },
+    LMSFinish: function(){ return "true"; },
+    LMSGetValue: function(el){ return data[el] || ""; },
+    LMSSetValue: function(el, val){ data[el]=String(val); return "true"; },
+    LMSCommit: function(){ return "true"; },
+    LMSGetLastError: noop, LMSGetErrorString: function(){ return ""; }, LMSGetDiagnostic: function(){ return ""; }
+  };
+  var API2004 = {
+    Initialize: function(){ return "true"; },
+    Terminate: function(){ return "true"; },
+    GetValue: function(el){ return data[el] || ""; },
+    SetValue: function(el, val){ data[el]=String(val); return "true"; },
+    Commit: function(){ return "true"; },
+    GetLastError: noop, GetErrorString: function(){ return ""; }, GetDiagnostic: function(){ return ""; }
+  };
+  // Exponer en el parent (esta página) para que el SCO en el iframe lo encuentre al subir en la jerarquía.
+  window.API = API12;
+  window.API_1484_11 = API2004;
+})();
+</script>
+<?php
+echo $OUTPUT->footer();

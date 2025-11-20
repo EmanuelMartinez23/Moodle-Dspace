@@ -72,7 +72,14 @@ if (!$token) {
     exit;
 }
 
-$url = rtrim($apiUrl, '/') . "/bitstreams/{$uuid}/download";
+// En algunos despliegues, 'server' apunta a la API REST (p.ej. http://host/server/api).
+// El endpoint de descarga pública suele estar en la raíz del UI (p.ej. http://host/bitstreams/{uuid}/download).
+// Para ser resilientes, si detectamos /server/api al final, construimos la URL de descarga desde la raíz.
+$downloadbase = rtrim($apiUrl, '/');
+if (preg_match('~/(server/api)$~', $downloadbase)) {
+    $downloadbase = preg_replace('~/(server/api)$~', '', $downloadbase);
+}
+$url = $downloadbase . "/bitstreams/{$uuid}/download";
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

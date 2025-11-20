@@ -174,10 +174,10 @@ class block_dspace_integration extends block_base {
                                                 $previewUrlEsc = htmlspecialchars($localReader->out(false), ENT_QUOTES, 'UTF-8');
                                                 $previewHtml .= "<button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button> <span class='text-muted small'>{$bitName}</span><br>";
                                             } else if ($ext === 'zip' || $ext === 'scorm' || strpos($mime, 'zip') !== false) {
-                                                // Para SCORM lanzamos el reproductor de Moodle creando/reutilizando una actividad con paquete externo
-                                                $launchurl = new moodle_url('/blocks/dspace_integration/launch_scorm.php', ['uuid' => $bitUuid]);
+                                                // Previsualización SCORM (Opción A): visor ligero sin crear actividad
+                                                $launchurl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $bitUuid]);
                                                 $launchurlEsc = htmlspecialchars($launchurl->out(false), ENT_QUOTES, 'UTF-8');
-                                                $previewHtml .= "<button type='button' class='btn btn-sm btn-secondary' onclick=\"openPreviewWindow('{$launchurlEsc}')\">SCORM</button> <span class='text-muted small'>{$bitName}</span><br>";
+                                                $previewHtml .= "<button type='button' class='btn btn-sm btn-secondary' title='Vista previa sin calificaciones' onclick=\"openPreviewWindow('{$launchurlEsc}')\">SCORM</button> <span class='text-muted small'>{$bitName}</span><br>";
                                             } else {
                                                 // Otros tipos: sin previsualización disponible
                                                 $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span> <span class='text-muted small'>{$bitName}</span><br>";
