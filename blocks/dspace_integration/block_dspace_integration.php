@@ -48,8 +48,8 @@ class block_dspace_integration extends block_base {
                     },
                     columnDefs: [
                         { width: '220px', targets: 0 },
-                        { width: '220px', targets: 1 },
-                        { width: '180px', targets: 2 }
+                        { width: '440px', targets: 1 },
+                        { width: '360px', targets: 2 }
                     ]
                   });
                 }
@@ -137,8 +137,8 @@ class block_dspace_integration extends block_base {
                                     <thead>
                                         <tr>
                                             <th style='width:220px; word-wrap:break-word;'>Item</th>
-                                            <th style='width:220px; word-wrap:break-word;'>Bitstreams</th>
-                                            <th style='width:180px; word-wrap:break-word;'>Previsualizar</th>
+                                            <th style='width:440px; word-wrap:break-word;'>Bitstreams</th>
+                                            <th style='width:360px; word-wrap:break-word;'>Previsualizar</th>
                                         </tr>
                                     </thead>
                                     <tbody>

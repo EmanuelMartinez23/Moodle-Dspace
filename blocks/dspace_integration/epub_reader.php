@@ -222,12 +222,18 @@ echo $OUTPUT->header();
                         throw new Error(`No se pudo descargar el EPUB (HTTP ${epubResp.status})`);
                     }
                     const epubBlob = await epubResp.blob();
-                    const epubUrl = URL.createObjectURL(epubBlob);
 
                     status.textContent = 'Cargando EPUB...';
 
-                    // Inicializar libro EPUB usando el Object URL
-                    book = ePub(epubUrl);
+                    // Inicializar libro EPUB usando datos en memoria para evitar peticiones HTTP internas
+                    try {
+                        const buffer = await epubBlob.arrayBuffer();
+                        book = ePub(buffer);
+                    } catch (e) {
+                        // Fallback: usar Object URL si el ArrayBuffer falla
+                        const epubUrl = URL.createObjectURL(epubBlob);
+                        book = ePub(epubUrl);
+                    }
 
                     // Configurar renderizado
                     rendition = book.renderTo("viewer", {
