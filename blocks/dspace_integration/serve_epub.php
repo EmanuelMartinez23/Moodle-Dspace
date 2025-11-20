@@ -71,12 +71,29 @@ if (in_array($ext, ['html', 'htm', 'xhtml'])) {
     if ($reldir === '.' || $reldir === '') { $reldir = ''; }
     $dirparam = ($reldir === '') ? '' : ($reldir . '/');
     $baseurl = new moodle_url('/blocks/dspace_integration/serve_epub.php', ['uuid' => $uuid, 'file' => $dirparam]);
+    // Detectar si es XHTML para autocerrar la etiqueta base correctamente.
+    $isxhtml = ($ext === 'xhtml')
+        || (stripos($html, '<?xml') !== false)
+        || (stripos($html, 'xmlns="http://www.w3.org/1999/xhtml"') !== false);
+
     // Importante: escapar la URL para evitar errores XML (entityref) en XHTML por caracteres como &
-    $base = '<base href="' . s($baseurl->out(false)) . '">';
-    if (stripos($html, '<head') !== false) {
-        $html = preg_replace('/<head(\b[^>]*)>/i', '<head$1>' . "\n    $base\n", $html, 1);
-    } else {
-        $html = $base . "\n" . $html;
+    $basehref = s($baseurl->out(false));
+    $basetag = $isxhtml ? '<base href="' . $basehref . '"/>' : '<base href="' . $basehref . '">';
+
+    // Si ya existe un <base ...>, reemplazar por el nuestro (evitando duplicados)
+    $hadbase = false;
+    if (preg_match('/<\s*base\b[^>]*>/i', $html)) {
+        $hadbase = true;
+        $html = preg_replace('/<\s*base\b[^>]*>/i', $basetag, $html, 1);
+    }
+
+    // Si no hay <base>, inyectar justo después de <head>
+    if (!$hadbase) {
+        if (stripos($html, '<head') !== false) {
+            $html = preg_replace('/<head(\b[^>]*)>/i', '<head$1>' . "\n    $basetag\n", $html, 1);
+        } else {
+            $html = $basetag . "\n" . $html;
+        }
     }
 
     // Reescritura href/src/data relativos -> volver a este script

@@ -158,13 +158,25 @@ if ($serve !== '') {
         if ($reldir === '.' || $reldir === '') { $reldir = ''; }
         $dirparam = ($reldir === '') ? '' : ($reldir . '/');
         $baseurl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $uuid, 'file' => $dirparam]);
-        $base = '<base href="' . $baseurl->out(false) . '">';
+        // Detectar XHTML para autocerrar correctamente la etiqueta base
+        $isxhtml = (stripos($html, '<?xml') !== false)
+            || (stripos($html, 'xmlns="http://www.w3.org/1999/xhtml"') !== false)
+            || (preg_match('~<\s*html[^>]*\bxmlns\s*=\s*"http://www.w3.org/1999/xhtml"~i', $html) === 1);
+        $basehref = s($baseurl->out(false));
+        $basetag = $isxhtml ? '<base href="' . $basehref . '"/>' : '<base href="' . $basehref . '">';
 
-        // Inyectar <base> por si el paquete utiliza rutas relativas básicas
-        if (stripos($html, '<head') !== false) {
-            $html = preg_replace('/<head(\b[^>]*)>/i', '<head$1>' . "\n    $base\n", $html, 1);
-        } else {
-            $html = $base . "\n" . $html;
+        // Reemplazar un <base> existente o inyectar si no existe
+        $hadbase = false;
+        if (preg_match('/<\s*base\b[^>]*>/i', $html)) {
+            $hadbase = true;
+            $html = preg_replace('/<\s*base\b[^>]*>/i', $basetag, $html, 1);
+        }
+        if (!$hadbase) {
+            if (stripos($html, '<head') !== false) {
+                $html = preg_replace('/<head(\b[^>]*)>/i', '<head$1>' . "\n    $basetag\n", $html, 1);
+            } else {
+                $html = $basetag . "\n" . $html;
+            }
         }
 
         // Reescritura de rutas relativas en atributos href/src a través de este mismo script
@@ -189,7 +201,7 @@ if ($serve !== '') {
             }
             $normalized = implode('/', $segments);
             $murl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $uuid, 'file' => $normalized]);
-            $out = $murl->out(false);
+            $out = s($murl->out(false));
             return $attr . '="' . $out . '"';
         };
 
