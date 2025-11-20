@@ -181,7 +181,7 @@ class block_dspace_integration extends block_base {
                                             $downloadUrl = "http://192.168.1.27:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
                                             // Checkbox + texto centrados por fila
-                                            $bitstreamHtml .= "<span class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'><span>{$bitName}</span></span><br>";
+                                            $bitstreamHtml .= "<span class='dspace-bit-row text-center'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'><span>{$bitName}</span></span><br>";
 				    //$bitstreamHtml .= "[{$downloadBadge}] <label> {$bitName}</label> <br>";
 
                                             // Construcción de enlaces de previsualización por tipo
@@ -209,14 +209,14 @@ class block_dspace_integration extends block_base {
 
                                 $this->content->text .= "
                                     <tr>
-    <td style='word-break: break-word; white-space: normal; overflow-wrap: break-word; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;'><span class='badge bg-light text-dark'>{$title}</span></td>
-    <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;'>
-        <span class='badge bg-light text-dark dspace-bit-badge'>{$bitstreamHtml}</span>
-    </td>
-    <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-        {$previewHtml}
-    </td>
-</tr>
+                                        <td><span class='badge bg-light text-dark text-center'>{$title}</span></td>
+                                        <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+                                            <span class='badge bg-light text-dark dspace-bit-badge text-center'>{$bitstreamHtml}</span>
+                                        </td>
+                                        <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+                                            {$previewHtml}
+                                        </td>
+                                    </tr>
                                 ";
                             }
 
