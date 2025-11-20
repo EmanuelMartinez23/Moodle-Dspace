@@ -77,8 +77,13 @@ $url = rtrim($apiUrl, '/') . "/bitstreams/{$uuid}/download";
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HEADER, true);
+// Seguir redirecciones que suelen devolver los endpoints de descarga
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Authorization: Bearer {$token}"
+    "Authorization: Bearer {$token}",
+    // Aceptar binarios genéricos
+    "Accept: */*"
 ]);
 
 $response = curl_exec($ch);

@@ -78,6 +78,8 @@ if ($cm) {
     $fromform->section = 0;
     $fromform->visible = 1;
     $fromform->modulename = 'scorm';
+    // add_moduleinfo espera en algunos flujos $fromform->module (id en tabla {modules}).
+    $fromform->module = $DB->get_field('modules', 'id', ['name' => 'scorm']);
     $fromform->name = $name;
     $fromform->intro = '';
     $fromform->introformat = FORMAT_HTML;
