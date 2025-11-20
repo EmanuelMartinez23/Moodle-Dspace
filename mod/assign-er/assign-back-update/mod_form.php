@@ -120,7 +120,7 @@ class mod_assign_mod_form extends moodleform_mod {
             $mform->addElement('html', '<p>Error: No se pudo obtener el ID del curso.</p>');
         }
         // Buton Descarga     
-        //$mform->addElement('submit', 'process_bitstreams', get_string('download_and_store_files', 'mod_assign'));
+        $mform->addElement('submit', 'process_bitstreams', get_string('download_and_store_files', 'mod_assign'));
 
         // funcional
         $ctx = null;

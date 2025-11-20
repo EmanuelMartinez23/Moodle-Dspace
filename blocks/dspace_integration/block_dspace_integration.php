@@ -145,13 +145,7 @@ class block_dspace_integration extends block_base {
                                             $downloadUrl = "http://192.168.135.5:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
 					    // for download
-					    //$bitstreamHtml .= "<label><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> {$bitName}</label>
-					    
-					    // {$downloadBadge} <br>";
-                                             $bitstreamHtml .= "
-   						 <div style='margin-bottom:4px; word-break: break-word; white-space: normal;'>
-       						 {$downloadBadge}
-   						 </div>";
+					    $bitstreamHtml .= "<label><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> {$bitName}</label> <br>";
 					    //$bitstreamHtml .= "[{$downloadBadge}] <label> {$bitName}</label> <br>";
                                         }
                                     }
