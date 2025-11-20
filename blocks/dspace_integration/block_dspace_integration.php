@@ -169,14 +169,15 @@ class block_dspace_integration extends block_base {
                                             $safeUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
 
                                             if ($ext === 'epub' || $mime === 'application/epub+zip') {
-                                                // Usamos el lector público de epub.js con parámetro ?book=URL
-                                                $epubReader = 'https://futurepress.github.io/epubjs-reader/';
-                                                $previewUrl = $epubReader . '?book=' . rawurlencode($downloadUrl);
-                                                $previewUrlEsc = htmlspecialchars($previewUrl, ENT_QUOTES, 'UTF-8');
+                                                // Usamos un visor EPUB local para evitar bloqueos CORS del lector público
+                                                $localReader = new moodle_url('/blocks/dspace_integration/epub_reader.php', ['uuid' => $bitUuid]);
+                                                $previewUrlEsc = htmlspecialchars($localReader->out(false), ENT_QUOTES, 'UTF-8');
                                                 $previewHtml .= "<button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button> <span class='text-muted small'>{$bitName}</span><br>";
                                             } else if ($ext === 'zip' || $ext === 'scorm' || strpos($mime, 'zip') !== false) {
-                                                // Para SCORM mostramos intento de apertura y aviso
-                                                $previewHtml .= "<button type='button' class='btn btn-sm btn-secondary' onclick=\"previewScormNotice('{$safeUrl}')\">SCORM</button> <span class='text-muted small'>{$bitName}</span><br>";
+                                                // Para SCORM lanzamos el reproductor de Moodle creando/reutilizando una actividad con paquete externo
+                                                $launchurl = new moodle_url('/blocks/dspace_integration/launch_scorm.php', ['uuid' => $bitUuid]);
+                                                $launchurlEsc = htmlspecialchars($launchurl->out(false), ENT_QUOTES, 'UTF-8');
+                                                $previewHtml .= "<button type='button' class='btn btn-sm btn-secondary' onclick=\"openPreviewWindow('{$launchurlEsc}')\">SCORM</button> <span class='text-muted small'>{$bitName}</span><br>";
                                             } else {
                                                 // Otros tipos: sin previsualización disponible
                                                 $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span> <span class='text-muted small'>{$bitName}</span><br>";
