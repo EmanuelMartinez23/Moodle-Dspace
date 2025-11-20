@@ -1,0 +1,97 @@
+.dspace-table th, .dspace-table td {
+    width: 220px !important;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+/* Estilos personalizados para el bloque dspace_integration */
+.block_dspace_integration {
+    background-color: #ffffff; /* Fondo verde */
+    color: #333; /* Texto oscuro para mejor contraste */
+    padding: 20px; /* Espaciado interno aumentado */
+    border-radius: 12px; /* Bordes más redondeados */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra sutil para profundidad */
+    margin-bottom: 20px; /* Espacio debajo del bloque */
+}
+
+/* Estilo para los encabezados dentro del bloque */
+.block_dspace_integration h2, .block_dspace_integration h3 {
+    color: #000000; /* Encabezados en azul oscuro */
+    font-weight: bold; /* Texto en negrita para los encabezados */
+    margin-top: 0; /* Eliminar margen superior */
+    margin-bottom: 10px; /* Espacio inferior */
+}
+
+/* Estilo para listas */
+.block_dspace_integration ul {
+    list-style-type: none; /* Eliminar los puntos de lista */
+    padding-left: 0; /* Sin espaciado izquierdo */
+    margin: 0; /* Eliminar márgenes */
+}
+
+/* Estilo para los elementos de la lista */
+.block_dspace_integration li {
+    padding: 10px; /* Espaciado entre elementos de la lista */
+    margin-bottom: 10px; /* Espacio entre ítems */
+    background-color: #ffffff; /* Fondo claro para los elementos de la lista */
+    /* border-radius: 8px; Bordes redondeados en los ítems */
+    /* border: 1px solid #d0d0d0; Borde gris claro */
+}
+
+/* Estilo para los ítems dentro de la lista */
+.block_dspace_integration ul ul {
+    padding-left: 20px; /* Sangría para sublistas */
+}
+
+/* Estilo para enlaces dentro del bloque */
+.block_dspace_integration a {
+    color: #0056b3; /* Enlaces en azul oscuro */
+    text-decoration: none; /* Sin subrayado */
+}
+
+.block_dspace_integration a:hover {
+    color: #003d80; /* Enlaces un poco más oscuros al pasar el ratón */
+    text-decoration: underline; /* Subrayado en hover */
+}
+.dspace-upload-container {
+    max-width: 600px;
+    margin: 30px auto;
+    padding: 20px 30px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+}
+
+.dspace-title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #2a4365;
+}
+
+.dspace-form .form-group {
+    margin-bottom: 15px;
+}
+
+.dspace-form label {
+    font-weight: bold;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.dspace-form .form-control,
+.dspace-form .form-control-file {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.dspace-form .btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+}
