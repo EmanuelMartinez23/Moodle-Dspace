@@ -193,7 +193,7 @@ class block_dspace_integration extends block_base {
                                                 // Visor EPUB server-side (sin dependencia de epub.js)
                                                 $localReader = new moodle_url('/blocks/dspace_integration/preview_epub.php', ['uuid' => $bitUuid]);
                                                 $previewUrlEsc = htmlspecialchars($localReader->out(false), ENT_QUOTES, 'UTF-8');
-                                                $previewHtml .= "<span class='dspace-preview-cell'><button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button><span class='text-muted small'>{$bitName}</span></span><br>";
+                                                $previewHtml .= "<span class='dspace-preview-cell'><button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button></span><br>";
                                             } else if ($ext === 'zip' || $ext === 'scorm' || strpos($mime, 'zip') !== false) {
                                                 // Previsualización SCORM (Opción A): visor ligero sin crear actividad
                                                 $launchurl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $bitUuid]);
@@ -209,14 +209,14 @@ class block_dspace_integration extends block_base {
 
                                 $this->content->text .= "
                                     <tr>
-                                        <td><span class='badge bg-light text-dark'>{$title}</span></td>
-                                        <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-                                            <span class='badge bg-light text-dark dspace-bit-badge'>{$bitstreamHtml}</span>
-                                        </td>
-                                        <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-                                            {$previewHtml}
-                                        </td>
-                                    </tr>
+    <td style='word-break: break-word; white-space: normal; overflow-wrap: break-word; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;'><span class='badge bg-light text-dark'>{$title}</span></td>
+    <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;'>
+        <span class='badge bg-light text-dark dspace-bit-badge'>{$bitstreamHtml}</span>
+    </td>
+    <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+        {$previewHtml}
+    </td>
+</tr>
                                 ";
                             }
 
