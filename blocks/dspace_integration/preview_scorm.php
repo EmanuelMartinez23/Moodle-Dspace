@@ -148,24 +148,67 @@ if ($serve !== '') {
         'mp3' => 'audio/mpeg', 'mp4' => 'video/mp4', 'webm' => 'video/webm', 'ogg' => 'audio/ogg'
     ];
     $ctype = $mimes[$ext] ?? 'application/octet-stream';
-    // Para archivos HTML, inyectamos <base href> para que los recursos relativos (CSS/JS/IMG)
-    // se resuelvan a través de este mismo script preservando uuid y la carpeta actual.
+    // Para archivos HTML: inyectar <base> y reescribir rutas relativas en href/src a través de este mismo script.
     if (in_array($ext, ['html','htm','xhtml'])) {
         header('Content-Type: ' . $ctype);
         $html = file_get_contents($full);
+
         // Calcular base href apuntando al directorio del archivo actual
         $reldir = trim(str_replace('\\', '/', dirname($rel)), './');
         if ($reldir === '.' || $reldir === '') { $reldir = ''; }
         $dirparam = ($reldir === '') ? '' : ($reldir . '/');
         $baseurl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $uuid, 'file' => $dirparam]);
         $base = '<base href="' . $baseurl->out(false) . '">';
+
+        // Inyectar <base> por si el paquete utiliza rutas relativas básicas
         if (stripos($html, '<head') !== false) {
-            // Insertar justo después de <head>
             $html = preg_replace('/<head(\b[^>]*)>/i', '<head$1>' . "\n    $base\n", $html, 1);
         } else {
-            // No hay <head>, insertar al inicio
             $html = $base . "\n" . $html;
         }
+
+        // Reescritura de rutas relativas en atributos href/src a través de este mismo script
+        // Evitar reescribir URLs absolutas (http, https, //), data:, javascript:, mailto:, #
+        $rewrite = function($matches) use ($uuid, $dirparam) {
+            $attr = $matches[1];
+            $url  = $matches[2];
+            $trim = trim($url);
+            if ($trim === '' || $trim[0] === '#' || preg_match('~^(?:https?:)?//~i', $trim) ||
+                preg_match('~^(?:data:|javascript:|mailto:)~i', $trim)) {
+                return $matches[0];
+            }
+            // Resolver ./ y ../ sobre el directorio actual (dirparam)
+            $rel = $dirparam . $trim;
+            $rel = preg_replace('~^\./~', '', $rel);
+            // Normalizar ../ de forma segura
+            $segments = [];
+            foreach (explode('/', str_replace('\\', '/', $rel)) as $seg) {
+                if ($seg === '' || $seg === '.') continue;
+                if ($seg === '..') { array_pop($segments); continue; }
+                $segments[] = $seg;
+            }
+            $normalized = implode('/', $segments);
+            $murl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $uuid, 'file' => $normalized]);
+            $out = $murl->out(false);
+            return $attr . '="' . $out . '"';
+        };
+
+        // Reescribir en tags comunes
+        $patterns = [
+            // href en link/a/area
+            '/\b(href)\s*=\s*"([^"]*)"/i',
+            '/\b(href)\s*=\s*\'([^\']*)\'/i',
+            // src en script/img/audio/video/source/iframe/object/embed
+            '/\b(src)\s*=\s*"([^"]*)"/i',
+            '/\b(src)\s*=\s*\'([^\']*)\'/i',
+            // data en object
+            '/\b(data)\s*=\s*"([^"]*)"/i',
+            '/\b(data)\s*=\s*\'([^\']*)\'/i',
+        ];
+        foreach ($patterns as $pat) {
+            $html = preg_replace_callback($pat, $rewrite, $html);
+        }
+
         echo $html;
         exit;
     } else {

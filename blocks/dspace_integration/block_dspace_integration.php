@@ -27,20 +27,22 @@ class block_dspace_integration extends block_base {
         $customcss = "
             .block_dspace_integration .dspace-table-wrap { width: 100%; overflow-x: auto; }
             .block_dspace_integration .dataTables_wrapper { width: 100%; overflow-x: auto; }
-            .block_dspace_integration table.dspace-table { white-space: nowrap; }
+            /* Permitimos el wrap natural; el scroll aparece si el contenido supera el ancho */
+            .block_dspace_integration table.dspace-table { table-layout: auto; }
+            .block_dspace_integration table.dspace-table th, .block_dspace_integration table.dspace-table td { white-space: normal; }
             .block_dspace_integration .dataTables_filter { float: right; }
         ";
 
         $customjs = "
             \$(document).ready(function() {
-                \$('.dspace-table').DataTable({
+                if ($.fn && $.fn.DataTable) {
+                  \$('.dspace-table').DataTable({
                     pageLength: 5,
                     lengthMenu: [ [5, 10, 15, 25, 50], [5, 10, 15, 25, 50] ],
                     lengthChange: true,
                     searching: true,
                     ordering: true,
                     autoWidth: false,
-                    scrollX: true,
                     language: {
                         url: '//cdn.datatables.net/plug-ins/1.13.1/i18n/es-ES.json'
                     },
@@ -49,7 +51,8 @@ class block_dspace_integration extends block_base {
                         { width: '220px', targets: 1 },
                         { width: '180px', targets: 2 }
                     ]
-                });
+                  });
+                }
 
                 // Funciones auxiliares de previsualización
                 window.openPreviewWindow = function(url) {
@@ -130,7 +133,7 @@ class block_dspace_integration extends block_base {
                         if (!empty($collectionItems)) {
                             $this->content->text .= "
                                 <div class='dspace-table-wrap'>
-                                <table class='table table-striped table-bordered dspace-table display nowrap' style='width:100%;'>
+                                <table class='table table-striped table-bordered dspace-table display' style='width:100%;'>
                                     <thead>
                                         <tr>
                                             <th style='width:220px; word-wrap:break-word;'>Item</th>
