@@ -181,8 +181,7 @@ class block_dspace_integration extends block_base {
                                             $downloadUrl = "http://192.168.1.27:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
                                             // Checkbox + texto centrados por fila
-                                            $bitstreamHtml .= "<span class='dspace-bit-row text-center'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'><span>{$bitName}</span></span><br>";
-				    //$bitstreamHtml .= "[{$downloadBadge}] <label> {$bitName}</label> <br>";
+                                            $bitstreamHtml .= "<div class='text-center'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div>";				    //$bitstreamHtml .= "[{$downloadBadge}] <label> {$bitName}</label> <br>";
 
                                             // Construcción de enlaces de previsualización por tipo
                                             $ext = strtolower(pathinfo($bitstream['name'] ?? '', PATHINFO_EXTENSION));
@@ -208,16 +207,16 @@ class block_dspace_integration extends block_base {
                                 }
 
                                 $this->content->text .= "
-                                    <tr>
-                                        <td><span class='badge bg-light text-dark text-center'>{$title}</span></td>
-                                        <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-                                            <span class='badge bg-light text-dark dspace-bit-badge text-center'>{$bitstreamHtml}</span>
-                                        </td>
-                                        <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-                                            {$previewHtml}
-                                        </td>
-                                    </tr>
-                                ";
+    <tr>
+        <td class='text-center' style='vertical-align: top;'><span class='badge bg-light text-dark'>{$title}</span></td>
+        <td class='text-center' style='word-break: break-word; white-space: normal; overflow-wrap: break-word; vertical-align: top;'>
+            {$bitstreamHtml}
+        </td>
+        <td class='text-center' style='word-break: break-word; white-space: normal; overflow-wrap: break-word; vertical-align: top;'>
+            {$previewHtml}
+        </td>
+    </tr>
+";
                             }
 
                             $this->content->text .= "</tbody></table></div>";
