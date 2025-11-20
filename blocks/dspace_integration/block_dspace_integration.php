@@ -202,9 +202,9 @@ class block_dspace_integration extends block_base {
 
                                 $this->content->text .= "
                                     <tr>
-					<td>{$title}</td>
+					<td><span class='badge bg-light text-dark'>{$title}</span>  </td>
                                           <td style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-					    {$bitstreamHtml}
+					    <span class='badge bg-light text-dark'>{$bitstreamHtml}</span> 
 					</td>
                                           <td style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
                                                 {$previewHtml}
