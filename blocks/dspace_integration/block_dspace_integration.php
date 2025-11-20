@@ -183,8 +183,8 @@ class block_dspace_integration extends block_base {
                                             $safeUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
 
                                             if ($ext === 'epub' || $mime === 'application/epub+zip') {
-                                                // Usamos un visor EPUB local para evitar bloqueos CORS del lector público
-                                                $localReader = new moodle_url('/blocks/dspace_integration/epub_reader.php', ['uuid' => $bitUuid]);
+                                                // Visor EPUB server-side (sin dependencia de epub.js)
+                                                $localReader = new moodle_url('/blocks/dspace_integration/preview_epub.php', ['uuid' => $bitUuid]);
                                                 $previewUrlEsc = htmlspecialchars($localReader->out(false), ENT_QUOTES, 'UTF-8');
                                                 $previewHtml .= "<button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button> <span class='text-muted small'>{$bitName}</span><br>";
                                             } else if ($ext === 'zip' || $ext === 'scorm' || strpos($mime, 'zip') !== false) {
