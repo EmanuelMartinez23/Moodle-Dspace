@@ -128,7 +128,9 @@ if (!file_exists($manifestpath)) {
 
 // Petición de servir archivos internos del paquete
 if ($serve !== '') {
-    $rel = dspace_scorm_safepath($serve);
+    // Aceptar rutas URL-encoded desde los recursos internos del paquete (espacios, acentos, etc.)
+    $decoded = rawurldecode($serve);
+    $rel = dspace_scorm_safepath($decoded);
     $full = $packdir . DIRECTORY_SEPARATOR . $rel;
     if (!file_exists($full) || !is_file($full)) {
         http_response_code(404);
@@ -146,10 +148,32 @@ if ($serve !== '') {
         'mp3' => 'audio/mpeg', 'mp4' => 'video/mp4', 'webm' => 'video/webm', 'ogg' => 'audio/ogg'
     ];
     $ctype = $mimes[$ext] ?? 'application/octet-stream';
-    header('Content-Type: ' . $ctype);
-    header('Content-Length: ' . filesize($full));
-    readfile($full);
-    exit;
+    // Para archivos HTML, inyectamos <base href> para que los recursos relativos (CSS/JS/IMG)
+    // se resuelvan a través de este mismo script preservando uuid y la carpeta actual.
+    if (in_array($ext, ['html','htm','xhtml'])) {
+        header('Content-Type: ' . $ctype);
+        $html = file_get_contents($full);
+        // Calcular base href apuntando al directorio del archivo actual
+        $reldir = trim(str_replace('\\', '/', dirname($rel)), './');
+        if ($reldir === '.' || $reldir === '') { $reldir = ''; }
+        $dirparam = ($reldir === '') ? '' : ($reldir . '/');
+        $baseurl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $uuid, 'file' => $dirparam]);
+        $base = '<base href="' . $baseurl->out(false) . '">';
+        if (stripos($html, '<head') !== false) {
+            // Insertar justo después de <head>
+            $html = preg_replace('/<head(\b[^>]*)>/i', '<head$1>' . "\n    $base\n", $html, 1);
+        } else {
+            // No hay <head>, insertar al inicio
+            $html = $base . "\n" . $html;
+        }
+        echo $html;
+        exit;
+    } else {
+        header('Content-Type: ' . $ctype);
+        header('Content-Length: ' . filesize($full));
+        readfile($full);
+        exit;
+    }
 }
 
 // Determinar el launch file (index.html o el href del primer resource en imsmanifest.xml)

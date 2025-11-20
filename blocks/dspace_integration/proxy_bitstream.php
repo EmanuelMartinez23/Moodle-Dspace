@@ -131,10 +131,14 @@ if (file_put_contents($filepath, $file_content) === false) {
     exit;
 }
 
-// Para visualización - devolver JSON con URL
+// Para visualización - devolver JSON con URL (usar este mismo proxy para servir el EPUB)
 if ($action === 'view') {
     header('Content-Type: application/json; charset=utf-8');
-    $file_url = $CFG->wwwroot . '/blocks/dspace_integration/temp/' . $filename;
+    $file_url = (new moodle_url('/blocks/dspace_integration/proxy_bitstream.php', [
+        'uuid' => $uuid,
+        'action' => 'download',
+        'ts' => time()
+    ]))->out(false);
     echo json_encode([
         'url' => $file_url,
         'filename' => $filename,

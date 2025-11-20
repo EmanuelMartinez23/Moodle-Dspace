@@ -23,6 +23,15 @@ class block_dspace_integration extends block_base {
         // $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net@1.13.1/js/jquery.dataTables.min.js'), true);
         // $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/js/dataTables.bootstrap5.min.js'), true);
 
+        // Estilos mínimos para evitar desbordes en tabla y buscador
+        $customcss = "
+            .block_dspace_integration .dspace-table-wrap { width: 100%; overflow-x: auto; }
+            .block_dspace_integration .dataTables_wrapper { width: 100%; overflow-x: auto; }
+            .block_dspace_integration table.dspace-table { white-space: nowrap; }
+            .block_dspace_integration .dataTables_filter { float: right; }
+        ";
+        $PAGE->requires->css_code($customcss);
+
         $customjs = "
             \$(document).ready(function() {
                 \$('.dspace-table').DataTable({
@@ -119,7 +128,8 @@ class block_dspace_integration extends block_base {
                         $this->content->text .= "<div class='nested' style='display:none; margin-top:15px; '>";
                         if (!empty($collectionItems)) {
                             $this->content->text .= "
-                                <table class='table table-striped table-bordered dspace-table' style='width:100%; table-layout:fixed;'>
+                                <div class='dspace-table-wrap'>
+                                <table class='table table-striped table-bordered dspace-table display nowrap' style='width:100%;'>
                                     <thead>
                                         <tr>
                                             <th style='width:220px; word-wrap:break-word;'>Item</th>
@@ -200,7 +210,7 @@ class block_dspace_integration extends block_base {
                                 ";
                             }
 
-                            $this->content->text .= "</tbody></table>";
+                            $this->content->text .= "</tbody></table></div>";
                         } else {
                             $this->content->text .= "<p>⚠️ No hay items en esta colección.</p>";
                         }
