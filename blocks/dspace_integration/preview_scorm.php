@@ -13,7 +13,7 @@ $uuid = optional_param('uuid', '', PARAM_ALPHANUMEXT);
 $serve = optional_param('file', '', PARAM_RAW_TRIMMED); // ruta relativa dentro del paquete a servir
 
 if (empty($uuid)) {
-    print_error('missingparam', 'error', '', 'uuid');
+    throw new moodle_exception('missingparam', 'error', '', 'uuid');
 }
 
 // Directorio de trabajo por usuario y UUID
@@ -47,15 +47,16 @@ if (!file_exists($manifestpath)) {
     $user    = get_config('block_dspace_integration', 'email');
     $pass    = get_config('block_dspace_integration', 'password');
     if (empty($apiUrl) || empty($user) || empty($pass)) {
-        print_error('configdata', 'error', '', 'block_dspace_integration');
+        throw new moodle_exception('configdata', 'error', '', 'block_dspace_integration');
     }
 
-    // Construir URL de descarga pública (similar al proxy, tolerando /server/api)
-    $downloadbase = rtrim($apiUrl, '/');
-    if (preg_match('~/(server/api)$~', $downloadbase)) {
-        $downloadbase = preg_replace('~/(server/api)$~', '', $downloadbase);
+    // Construir URL preferente al endpoint REST de contenido; si no hay /api, usar pública.
+    $apibase = rtrim($apiUrl, '/');
+    if (preg_match('~/server/api$~', $apibase) || preg_match('~/api$~', $apibase)) {
+        $url = $apibase . "/core/bitstreams/{$uuid}/content";
+    } else {
+        $url = $apibase . "/bitstreams/{$uuid}/download";
     }
-    $url = $downloadbase . "/bitstreams/{$uuid}/download";
 
     // Autenticación a DSpace
     $token = null;
@@ -88,7 +89,7 @@ if (!file_exists($manifestpath)) {
     }
     curl_close($ch);
     if (empty($token)) {
-        print_error('generalexceptionmessage', 'error', 'No se pudo autenticar en DSpace');
+        throw new moodle_exception('generalexceptionmessage', 'error', '', 'No se pudo autenticar en DSpace');
     }
 
     // Descargar ZIP
@@ -104,13 +105,14 @@ if (!file_exists($manifestpath)) {
     ]);
     $data = curl_exec($ch);
     if ($data === false) {
+        $err = curl_error($ch);
         curl_close($ch);
-        print_error('cannotcreatetempdir', 'error', '', 'Descarga SCORM');
+        throw new moodle_exception('errorreadingfile', 'error', '', 'Error cURL en descarga SCORM: ' . $err);
     }
     $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
     if ($status >= 400) {
-        print_error('errorreadingfile', 'error', '', 'DSpace respondió ' . $status);
+        throw new moodle_exception('errorreadingfile', 'error', '', 'DSpace respondió ' . $status);
     }
     file_put_contents($zipfile, $data);
 
@@ -120,7 +122,7 @@ if (!file_exists($manifestpath)) {
         $zip->extractTo($packdir);
         $zip->close();
     } else {
-        print_error('errorunzippingfiles', 'error');
+        throw new moodle_exception('errorunzippingfiles', 'error');
     }
 }
 

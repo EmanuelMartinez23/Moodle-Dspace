@@ -75,11 +75,16 @@ if (!$token) {
 // En algunos despliegues, 'server' apunta a la API REST (p.ej. http://host/server/api).
 // El endpoint de descarga pública suele estar en la raíz del UI (p.ej. http://host/bitstreams/{uuid}/download).
 // Para ser resilientes, si detectamos /server/api al final, construimos la URL de descarga desde la raíz.
-$downloadbase = rtrim($apiUrl, '/');
-if (preg_match('~/(server/api)$~', $downloadbase)) {
-    $downloadbase = preg_replace('~/(server/api)$~', '', $downloadbase);
+// Preferir endpoint REST de contenido (funciona con Bearer). Si no se detecta API, caer a descarga pública.
+$apibase = rtrim($apiUrl, '/');
+if (preg_match('~/server/api$~', $apibase)) {
+    $url = $apibase . "/core/bitstreams/{$uuid}/content";
+} else if (preg_match('~/api$~', $apibase)) {
+    $url = $apibase . "/core/bitstreams/{$uuid}/content";
+} else {
+    $downloadbase = $apibase;
+    $url = $downloadbase . "/bitstreams/{$uuid}/download";
 }
-$url = $downloadbase . "/bitstreams/{$uuid}/download";
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
