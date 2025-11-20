@@ -47,9 +47,9 @@ class block_dspace_integration extends block_base {
                         url: '//cdn.datatables.net/plug-ins/1.13.1/i18n/es-ES.json'
                     },
                     columnDefs: [
-                        { width: '350px', targets: 0 },
-                        { width: '440px', targets: 1 },
-                        { width: '340px', targets: 2 }
+                        { width: '220px', targets: 0 },
+                        { width: '360px', targets: 1 },
+                        { width: '360px', targets: 2 }
                     ]
                   });
                 }
@@ -136,9 +136,9 @@ class block_dspace_integration extends block_base {
                                 <table class='table table-striped table-bordered dspace-table display' style='width:100%;'>
                                     <thead>
                                         <tr>
-                                            <th style='width:350px; word-wrap:break-word;'>Item</th>
-                                            <th style='width:440px; word-wrap:break-word;'>Bitstreams</th>
-                                            <th style='width:440px; word-wrap:break-word;'>Previsualizar</th>
+                                            <th style='width:220px; word-wrap:break-word;'>Item</th>
+                                            <th style='width:360px; word-wrap:break-word;'>Bitstreams</th>
+                                            <th style='width:360px; word-wrap:break-word;'>Previsualizar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
