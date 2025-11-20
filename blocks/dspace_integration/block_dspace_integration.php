@@ -31,6 +31,13 @@ class block_dspace_integration extends block_base {
             .block_dspace_integration table.dspace-table { table-layout: auto; }
             .block_dspace_integration table.dspace-table th, .block_dspace_integration table.dspace-table td { white-space: normal; }
             .block_dspace_integration .dataTables_filter { float: right; }
+            /* Centrados específicos solicitados */
+            .block_dspace_integration .dspace-col-bitstreams,
+            .block_dspace_integration .dspace-col-preview { text-align: center; vertical-align: middle; }
+            .block_dspace_integration .dspace-bit-row { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0; }
+            .block_dspace_integration .dspace-bit-row input[type=checkbox] { margin: 0; }
+            .block_dspace_integration .dspace-bit-badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; }
+            .block_dspace_integration .dspace-preview-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
         ";
 
         $customjs = "
@@ -137,8 +144,8 @@ class block_dspace_integration extends block_base {
                                     <thead>
                                         <tr>
                                             <th style='width:220px; word-wrap:break-word;'>Item</th>
-                                            <th style='width:360px; word-wrap:break-word;'>Bitstreams</th>
-                                            <th style='width:360px; word-wrap:break-word;'>Previsualizar</th>
+                                            <th class='dspace-col-bitstreams' style='width:360px; word-wrap:break-word;'>Bitstreams</th>
+                                            <th class='dspace-col-preview' style='width:360px; word-wrap:break-word;'>Previsualizar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -173,8 +180,8 @@ class block_dspace_integration extends block_base {
                                             // URL de descarga directa desde DSpace REST (usar el mismo host configurado para descargas)
                                             $downloadUrl = "http://192.168.1.27:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
-				    // for download
-				    $bitstreamHtml .= "<label><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> {$bitName}</label> <br>";
+                                            // Checkbox + texto centrados por fila
+                                            $bitstreamHtml .= "<span class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'><span>{$bitName}</span></span><br>";
 				    //$bitstreamHtml .= "[{$downloadBadge}] <label> {$bitName}</label> <br>";
 
                                             // Construcción de enlaces de previsualización por tipo
@@ -186,15 +193,15 @@ class block_dspace_integration extends block_base {
                                                 // Visor EPUB server-side (sin dependencia de epub.js)
                                                 $localReader = new moodle_url('/blocks/dspace_integration/preview_epub.php', ['uuid' => $bitUuid]);
                                                 $previewUrlEsc = htmlspecialchars($localReader->out(false), ENT_QUOTES, 'UTF-8');
-                                                $previewHtml .= "<button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button> <span class='text-muted small'>{$bitName}</span><br>";
+                                                $previewHtml .= "<span class='dspace-preview-cell'><button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button><span class='text-muted small'>{$bitName}</span></span><br>";
                                             } else if ($ext === 'zip' || $ext === 'scorm' || strpos($mime, 'zip') !== false) {
                                                 // Previsualización SCORM (Opción A): visor ligero sin crear actividad
                                                 $launchurl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $bitUuid]);
                                                 $launchurlEsc = htmlspecialchars($launchurl->out(false), ENT_QUOTES, 'UTF-8');
-                                                $previewHtml .= "<button type='button' class='btn btn-sm btn-secondary' title='Vista previa sin calificaciones' onclick=\"openPreviewWindow('{$launchurlEsc}')\">SCORM</button> <span class='text-muted small'>{$bitName}</span><br>";
+                                                $previewHtml .= "<span class='dspace-preview-cell'><button type='button' class='btn btn-sm btn-secondary' title='Vista previa sin calificaciones' onclick=\"openPreviewWindow('{$launchurlEsc}')\">SCORM</button></span><br>";
                                             } else {
                                                 // Otros tipos: sin previsualización disponible
-                                                $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span> <span class='text-muted small'>{$bitName}</span><br>";
+                                                $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span><br>";
                                             }
                                         }
                                     }
@@ -202,14 +209,13 @@ class block_dspace_integration extends block_base {
 
                                 $this->content->text .= "
                                     <tr>
-					<td><span class='badge bg-light text-dark'>{$title}</span>  </td>
-                                          <td style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-					    <span class='badge bg-light text-dark'>{$bitstreamHtml}</span> 
-					</td>
-                                          <td style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-                                                {$previewHtml}
-                                          </td>
-
+                                        <td><span class='badge bg-light text-dark'>{$title}</span></td>
+                                        <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+                                            <span class='badge bg-light text-dark dspace-bit-badge'>{$bitstreamHtml}</span>
+                                        </td>
+                                        <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+                                            {$previewHtml}
+                                        </td>
                                     </tr>
                                 ";
                             }

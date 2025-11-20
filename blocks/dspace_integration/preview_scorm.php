@@ -221,6 +221,22 @@ if ($serve !== '') {
             $html = preg_replace_callback($pat, $rewrite, $html);
         }
 
+        // Inyectar pequeño script para forzar navegación dentro del mismo iframe
+        // - Ajusta target de enlaces a _self
+        // - Redefine window.open para navegar en el mismo documento
+        $navjs = "(function(){\n  function retargetLinks(){\n    try {\n      var as = document.getElementsByTagName('a');\n      for (var i=0;i<as.length;i++){\n        if (as[i].target && as[i].target.toLowerCase() !== '_self'){ as[i].target = '_self'; }\n      }\n    } catch(e){}\n  }\n  try {\n    var _open = window.open;\n    window.open = function(url, name, specs){\n      if (typeof url === 'string' && url){ window.location.href = url; return null; }\n      return _open.apply(window, arguments);\n    };\n  } catch(e){}\n  if (document.readyState === 'loading'){\n    document.addEventListener('DOMContentLoaded', retargetLinks);\n  } else {\n    retargetLinks();\n  }\n})();";
+        $scriptblock = $isxhtml
+            ? '<script type="text/javascript">//<![CDATA[' . "\n" . $navjs . "\n" . '//]]></script>'
+            : '<script>' . $navjs . '</script>';
+
+        if (stripos($html, '</head>') !== false) {
+            $html = preg_replace('/<\/head>/i', $scriptblock . "\n</head>", $html, 1);
+        } else if (stripos($html, '</body>') !== false) {
+            $html = preg_replace('/<\/body>/i', $scriptblock . "\n</body>", $html, 1);
+        } else {
+            $html .= "\n" . $scriptblock;
+        }
+
         echo $html;
         exit;
     } else {
