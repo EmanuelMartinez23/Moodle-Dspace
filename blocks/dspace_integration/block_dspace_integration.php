@@ -23,14 +23,13 @@ class block_dspace_integration extends block_base {
         // $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net@1.13.1/js/jquery.dataTables.min.js'), true);
         // $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/js/dataTables.bootstrap5.min.js'), true);
 
-        // Estilos mínimos para evitar desbordes en tabla y buscador
+        // Estilos mínimos para evitar desbordes en tabla y buscador (inyectados inline para compatibilidad)
         $customcss = "
             .block_dspace_integration .dspace-table-wrap { width: 100%; overflow-x: auto; }
             .block_dspace_integration .dataTables_wrapper { width: 100%; overflow-x: auto; }
             .block_dspace_integration table.dspace-table { white-space: nowrap; }
             .block_dspace_integration .dataTables_filter { float: right; }
         ";
-        $PAGE->requires->css_code($customcss);
 
         $customjs = "
             \$(document).ready(function() {
@@ -91,7 +90,9 @@ class block_dspace_integration extends block_base {
             }
             $allItems = $allItemsData['_embedded']['items'] ?? [];
 
-            $this->content->text = "<div class='block_dspace_integration'>";
+            // Inyectamos CSS inline para evitar depender de $PAGE->requires->css_code() (no presente en algunas versiones)
+            $this->content->text = "<style>" . $customcss . "</style>";
+            $this->content->text .= "<div class='block_dspace_integration'>";
             $this->content->text .= "<h3>📚 Comunidades DSpace</h3>";
             $this->content->text .= "<ul class='list_community'>";
 
