@@ -38,9 +38,21 @@ class block_dspace_integration extends block_base {
                     },
                     columnDefs: [
                         { width: '220px', targets: 0 },
-                        { width: '220px', targets: 1 }
+                        { width: '220px', targets: 1 },
+                        { width: '180px', targets: 2 }
                     ]
                 });
+
+                // Funciones auxiliares de previsualización
+                window.openPreviewWindow = function(url) {
+                    // Abre en una nueva ventana/pestaña para evitar problemas de sandboxing en iframes
+                    window.open(url, '_blank', 'noopener');
+                };
+                window.previewScormNotice = function(url){
+                    // Mensaje informativo mínimo si no es posible previsualizar directamente
+                    alert('Para previsualizar un paquete SCORM es necesario que el paquete esté desplegado en un servidor web. Intentaremos abrir el archivo, pero si no se muestra, contacte con el administrador.');
+                    window.open(url, '_blank', 'noopener');
+                };
             });
         ";
         $PAGE->requires->js_init_code($customjs);
@@ -112,6 +124,7 @@ class block_dspace_integration extends block_base {
                                         <tr>
                                             <th style='width:220px; word-wrap:break-word;'>Item</th>
                                             <th style='width:220px; word-wrap:break-word;'>Bitstreams</th>
+                                            <th style='width:180px; word-wrap:break-word;'>Previsualizar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -120,6 +133,7 @@ class block_dspace_integration extends block_base {
                                 $title = htmlspecialchars($item['metadata']['dc.title'][0]['value'] ?? 'Sin título', ENT_QUOTES, 'UTF-8');
 
                                 $bitstreamHtml = '';
+                                $previewHtml = '';
                                 if (isset($item['_links']['bundles']['href'])) {
                                     try {
                                         $bundlesData = $this->makeGetRequest($item['_links']['bundles']['href']."?size=1000", $token);
@@ -142,11 +156,31 @@ class block_dspace_integration extends block_base {
                                         foreach ($bitstreams as $bitstream) {
                                             $bitUuid = $bitstream['uuid'];
                                             $bitName = htmlspecialchars($bitstream['name'] ?? 'Sin nombre', ENT_QUOTES, 'UTF-8');
+                                            // URL de descarga directa desde DSpace REST (usar el mismo host configurado para descargas)
                                             $downloadUrl = "http://192.168.135.5:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
-					    // for download
-					    $bitstreamHtml .= "<label><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> {$bitName}</label> <br>";
-					    //$bitstreamHtml .= "[{$downloadBadge}] <label> {$bitName}</label> <br>";
+				    // for download
+				    $bitstreamHtml .= "<label><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> {$bitName}</label> <br>";
+				    //$bitstreamHtml .= "[{$downloadBadge}] <label> {$bitName}</label> <br>";
+
+                                            // Construcción de enlaces de previsualización por tipo
+                                            $ext = strtolower(pathinfo($bitstream['name'] ?? '', PATHINFO_EXTENSION));
+                                            $mime = strtolower($bitstream['mimeType'] ?? '');
+                                            $safeUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
+
+                                            if ($ext === 'epub' || $mime === 'application/epub+zip') {
+                                                // Usamos el lector público de epub.js con parámetro ?book=URL
+                                                $epubReader = 'https://futurepress.github.io/epubjs-reader/';
+                                                $previewUrl = $epubReader . '?book=' . rawurlencode($downloadUrl);
+                                                $previewUrlEsc = htmlspecialchars($previewUrl, ENT_QUOTES, 'UTF-8');
+                                                $previewHtml .= "<button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button> <span class='text-muted small'>{$bitName}</span><br>";
+                                            } else if ($ext === 'zip' || $ext === 'scorm' || strpos($mime, 'zip') !== false) {
+                                                // Para SCORM mostramos intento de apertura y aviso
+                                                $previewHtml .= "<button type='button' class='btn btn-sm btn-secondary' onclick=\"previewScormNotice('{$safeUrl}')\">SCORM</button> <span class='text-muted small'>{$bitName}</span><br>";
+                                            } else {
+                                                // Otros tipos: sin previsualización disponible
+                                                $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span> <span class='text-muted small'>{$bitName}</span><br>";
+                                            }
                                         }
                                     }
                                 }
@@ -157,6 +191,9 @@ class block_dspace_integration extends block_base {
                                           <td style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
 					    {$bitstreamHtml}
 					</td>
+                                          <td style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+                                                {$previewHtml}
+                                          </td>
 
                                     </tr>
                                 ";
