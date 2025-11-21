@@ -75,7 +75,7 @@ if ($hassiteconfig && moodle_needs_upgrading()) {
 
 if (get_home_page() != HOMEPAGE_SITE) {
     // Redirect logged-in users to My Moodle overview if required.
-    $redirect = optional_param('redirect', 1, PARAM_BOOL);
+    $redirect = optional_param('redirect', 0, PARAM_BOOL);
     if (optional_param('setdefaulthome', false, PARAM_BOOL)) {
         set_user_preference('user_home_page_preference', HOMEPAGE_SITE);
     } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MY) && $redirect === 1) {
