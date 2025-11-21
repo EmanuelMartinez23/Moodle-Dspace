@@ -16,17 +16,8 @@ class block_dspace_integration extends block_base {
         }
         $this->content = new stdClass();
 
-        // CSS del bloque (alineaciones y soporte de scroll para DataTables)
-        $customcss = '
-            .block_dspace_integration .dspace-table-wrap{ overflow-x:auto; }
-            .block_dspace_integration table.dspace-table{ width:100%; }
-            .block_dspace_integration table.dspace-table th,
-            .block_dspace_integration table.dspace-table td{ vertical-align: middle !important; }
-            .block_dspace_integration .dspace-col-item,
-            .block_dspace_integration .dspace-col-bitstreams{ text-align:left; vertical-align:middle; }
-            .block_dspace_integration .dspace-col-preview,
-            .block_dspace_integration .dspace-col-add{ text-align:center; }
-        ';
+        // CSS mínimo para evitar variable indefinida; puede ser ampliado si es necesario.
+        $customcss = '';
 
         // Asegurar que el bloque no imprima JS “en crudo”.
         // Encapsulamos el script dentro de un nowdoc y lo pasamos a js_init_code más abajo.
@@ -82,139 +73,109 @@ document.addEventListener('DOMContentLoaded', function(){
                     };
                 }
 
-                // Utilidades DataTables: carga garantizada e inicialización
-                (function ensureDataTables(){
-                    function loadScript(src){ return new Promise(function(res, rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
-                    function loadCSS(href){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=href; document.head.appendChild(l); }
-                    // Cargar jQuery si no existe (DataTables requiere jQuery)
-                    var needJQ = (typeof window.jQuery === 'undefined');
-                    var jqPromise = needJQ ? loadScript('https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js') : Promise.resolve();
-                    // Cargar DataTables CSS/JS
-                    loadCSS('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/css/dataTables.bootstrap5.min.css');
-                    Promise.resolve().then(function(){ return jqPromise; }).then(function(){
-                        if (typeof jQuery.fn.DataTable === 'function') { return; }
-                        return loadScript('https://cdn.jsdelivr.net/npm/datatables.net@1.13.1/js/jquery.dataTables.min.js')
-                          .then(function(){ return loadScript('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/js/dataTables.bootstrap5.min.js'); });
-                    }).then(function(){ try { initDspaceTables(); } catch(e){} });
-                })();
-
-                function initDspaceTables(context){
-                    var $ = window.jQuery; if (!$) return;
-                    var root = context || document;
-                    $(root).find('table.dspace-table').each(function(){
-                        var $tbl = $(this);
-                        if ($tbl.hasClass('dt-initialized')) return;
-                        try {
-                            $tbl.addClass('dt-initialized').DataTable({
+                // Inicializar DataTables en la tabla como estaba antes (si está disponible)
+                try {
+                    if (window.jQuery && (jQuery.fn.DataTable || jQuery.fn.dataTable)) {
+                        var $ = jQuery;
+                        $('.dspace-table').each(function(){
+                            try {
+                                if ($.fn.DataTable.isDataTable(this)) return;
+                            } catch(e) {}
+                            $(this).DataTable({
                                 paging: true,
                                 searching: true,
                                 ordering: true,
                                 info: true,
-                                lengthChange: true,
-                                autoWidth: false,
-                                scrollX: true,
-                                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.1/i18n/es-ES.json' },
-                                columnDefs: [
-                                    { targets: [0,1], className: 'text-start align-middle' },
-                                    { targets: [2,3], className: 'text-center align-middle' }
-                                ]
+                                language: {
+                                    url: (window.M && M.util && M.util.get_strings && false) ? '' : '',
+                                    search: 'Buscar:',
+                                    lengthMenu: 'Mostrar _MENU_ entradas',
+                                    info: 'Mostrando _START_ a _END_ de _TOTAL_ entradas',
+                                    paginate: { previous: 'Anterior', next: 'Siguiente' },
+                                    zeroRecords: 'No se encontraron resultados'
+                                }
                             });
-                        } catch(e) {
-                            // Si falla, quitar marca para intentar nuevamente más tarde
-                            $tbl.removeClass('dt-initialized');
-                        }
-                    });
-                }
-
-                // Iniciar tablas al hacer clic en toggles que muestran colecciones
-                document.addEventListener('click', function(ev){
-                    var t = ev.target;
-                    if (t && (t.classList.contains('toggle') || t.closest('.toggle'))){
-                        // Dar tiempo a que se despliegue el contenedor
-                        setTimeout(function(){ initDspaceTables(document); }, 100);
+                        });
                     }
-                });
+                } catch(e) { /* silencioso */ }
 
-                // Agregar URL+Nombre de bitstream a los detalles de la tarea únicamente en descripción (intro/description)
+                // Agregar URL+Nombre de bitstream SIEMPRE a la descripción de la tarea (intro)
                 window.addToAssignmentDetails = async function(url, name){
                     try {
-                        // 1) TinyMCE (buscar el editor asociado a intro/description)
-                        var targetTiny = null;
-                        if (window.tinymce && tinymce.editors && tinymce.editors.length){
-                            for (var i=0;i<tinymce.editors.length;i++){
-                                var ed = tinymce.editors[i];
-                                var el = ed && ed.targetElm;
-                                var id = (el && el.id ? el.id : '').toLowerCase();
-                                var nm = (el && el.name ? el.name : '').toLowerCase();
-                                if (/intro|description/.test(id+' '+nm)) { targetTiny = ed; break; }
-                            }
-                        }
-                        if (targetTiny) {
-                            var ed = targetTiny;
-                            let content = ed.getContent({format:'html'}) || '';
-                            if (content.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
-                            // Asegurar sección "Recursos externos"
-                            if (content.indexOf('id="dspace-external-resources"') === -1) {
-                                content += '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
-                            }
-                            // Insertar <li> dentro del UL de la sección
-                            content = content.replace(/(<div[^>]*id="dspace-external-resources"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
-                                return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
-                            });
-                            ed.setContent(content);
-                            showToast('Recurso agregado a la tarea.', '');
-                            return;
-                        }
-                        // 2) Atto (buscar el wrapper asociado a intro/description)
-                        var attoWrapper = null;
-                        var wrappers = document.querySelectorAll('.editor_atto');
-                        for (var j=0;j<wrappers.length;j++){
-                            var w = wrappers[j];
-                            var ta = w.querySelector('textarea');
-                            var id2 = (ta && ta.id ? ta.id : '').toLowerCase();
-                            var nm2 = (ta && ta.name ? ta.name : '').toLowerCase();
-                            if (/intro|description/.test(id2+' '+nm2)) { attoWrapper = w; break; }
-                        }
-                        if (attoWrapper) {
-                            var atto = attoWrapper.querySelector('.editor_atto_content');
-                            var html = (atto && atto.innerHTML) ? atto.innerHTML : '';
-                            if (html.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
+                        // Helpers
+                        function injectList(html){
+                            if (html.indexOf(url) !== -1) { return {html: html, added: false, dup: true}; }
                             if (html.indexOf('id="dspace-external-resources"') === -1) {
                                 html += '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
                             }
                             html = html.replace(/(<div[^>]*id="dspace-external-resources"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
                                 return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
                             });
-                            if (atto) { atto.innerHTML = html; }
+                            return {html: html, added: true, dup: false};
+                        }
+
+                        function matchesIntroIdName(el){
+                            var id = (el.id||'').toLowerCase();
+                            var nm = (el.name||'').toLowerCase();
+                            return /(\b|_)intro(editor)?(\b|$)/.test(id) || /(\b|_)intro(editor)?(\b|$)/.test(nm);
+                        }
+
+                        // 1) TinyMCE: localizar específicamente el editor de "intro"/"introeditor"
+                        if (window.tinymce) {
+                            var targetEditor = null;
+                            if (tinymce.editors && tinymce.editors.length) {
+                                for (var i=0;i<tinymce.editors.length;i++){
+                                    var ed = tinymce.editors[i];
+                                    if (!ed) continue;
+                                    var t = ed.targetElm;
+                                    if (t && matchesIntroIdName(t)) { targetEditor = ed; break; }
+                                }
+                            }
+                            if (!targetEditor && tinymce.activeEditor && tinymce.activeEditor.targetElm && matchesIntroIdName(tinymce.activeEditor.targetElm)) {
+                                targetEditor = tinymce.activeEditor;
+                            }
+                            if (targetEditor) {
+                                var content = targetEditor.getContent({format:'html'}) || '';
+                                var res = injectList(content);
+                                if (res.dup) { showToast('Este recurso ya está agregado.', ''); return; }
+                                targetEditor.setContent(res.html);
+                                showToast('Recurso agregado a la descripción de la tarea.', '');
+                                return;
+                            }
+                        }
+
+                        // 2) Atto: localizar el wrapper relacionado con intro/introeditor
+                        var introTextarea = Array.from(document.querySelectorAll('textarea')).find(function(el){ return matchesIntroIdName(el); });
+                        var attoWrapper = introTextarea ? introTextarea.closest('.editor_atto') : null;
+                        var atto = attoWrapper ? attoWrapper.querySelector('.editor_atto_content') : null;
+                        if (atto) {
+                            var html = atto.innerHTML || '';
+                            var res2 = injectList(html);
+                            if (res2.dup) { showToast('Este recurso ya está agregado.', ''); return; }
+                            atto.innerHTML = res2.html;
                             var ta = attoWrapper.querySelector('textarea');
-                            if (ta) { ta.value = html; }
-                            showToast('Recurso agregado a la tarea.', '');
+                            if (ta) { ta.value = atto.innerHTML; }
+                            showToast('Recurso agregado a la descripción de la tarea.', '');
                             return;
                         }
-                        // 3) Textareas comunes
-                        var candidates = Array.from(document.querySelectorAll('textarea'))
-                          .filter(function(el){
-                              var id = (el.id||'').toLowerCase();
-                              var name = (el.name||'').toLowerCase();
-                              return /intro|description/.test(id+" "+name) || /\bintro\b/.test(name);
-                          });
-                        var target = candidates[0] || document.querySelector('textarea');
-                        if (target) {
-                            var val = target.value || '';
+
+                        // 3) Fallback a textarea del campo intro/introeditor exclusivamente
+                        if (introTextarea) {
+                            var val = introTextarea.value || '';
                             if (val.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
                             var blockStart = '\n\nRecursos externos:\n';
                             var line = '- ' + (name||'Recurso') + ' — ' + url + '\n';
                             if (val.indexOf('Recursos externos:') === -1) {
-                                target.value = (val ? (val+blockStart) : ('Recursos externos:\n')) + line;
+                                introTextarea.value = (val ? (val+blockStart) : ('Recursos externos:\n')) + line;
                             } else {
-                                target.value = val + line;
+                                introTextarea.value = val + line;
                             }
-                            showToast('Recurso agregado a la tarea.', '');
+                            showToast('Recurso agregado a la descripción de la tarea.', '');
                             return;
                         }
                         // 4) Fallback: copiar al portapapeles
                         await navigator.clipboard.writeText(url);
-                        showToast('No se encontró el editor. Copiamos la URL al portapapeles.', 'error');
+                        showToast('No se encontró la descripción de la tarea. Copiamos la URL al portapapeles.', 'error');
                     } catch(e){
                         showToast('No fue posible agregar automáticamente. Copiamos la URL al portapapeles.', 'error');
                         try { await navigator.clipboard.writeText(url); } catch(_){}
