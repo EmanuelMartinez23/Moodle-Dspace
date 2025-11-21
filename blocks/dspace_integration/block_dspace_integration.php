@@ -1,164 +1,4 @@
 
-<?php
-defined('MOODLE_INTERNAL') || die();
-
-class block_dspace_integration extends block_base {
-
-    public function init() {
-        $this->title = 'DSpace Integration';
-    }
-
-    public function get_content() {
-        global $PAGE;
-
-        if ($this->content !== null) {
-            return $this->content;
-        }
-        $this->content = new stdClass();
-
-        // CSS mínimo para evitar variable indefinida; puede ser ampliado si es necesario.
-        $customcss = '';
-
-        // Asegurar que el bloque no imprima JS “en crudo”.
-        // Encapsulamos el script dentro de un nowdoc y lo pasamos a js_init_code más abajo.
-        $customjs = <<<'JS'
-document.addEventListener('DOMContentLoaded', function(){
-                // Funciones auxiliares de previsualización
-                window.openPreviewWindow = function(url) {
-                    // Abre en una nueva ventana/pestaña para evitar problemas de sandboxing en iframes
-                    window.open(url, '_blank', 'noopener');
-                };
-                window.previewScormNotice = function(url){
-                    // Mensaje informativo mínimo si no es posible previsualizar directamente
-                    alert('Para previsualizar un paquete SCORM es necesario que el paquete esté desplegado en un servidor web. Intentaremos abrir el archivo, pero si no se muestra, contacte con el administrador.');
-                    window.open(url, '_blank', 'noopener');
-                };
-
-                // Toast mínimo por si no existe showToast (evitar errores en páginas sin bloque visible)
-                if (typeof window.showToast !== 'function') {
-                    window.showToast = function(msg, type){
-                        try {
-                            // Crear contenedor si no existe
-                            var c = document.getElementById('dspace-toast-container');
-                            if (!c) {
-                                c = document.createElement('div');
-                                c.id = 'dspace-toast-container';
-                                c.style.position = 'fixed';
-                                c.style.zIndex = '99999';
-                                c.style.top = '16px';
-                                c.style.right = '16px';
-                                c.style.display = 'flex';
-                                c.style.flexDirection = 'column';
-                                c.style.gap = '8px';
-                                document.body.appendChild(c);
-                            }
-                            var t = document.createElement('div');
-                            t.textContent = msg || '';
-                            t.style.padding = '10px 12px';
-                            t.style.borderRadius = '6px';
-                            t.style.color = '#fff';
-                            t.style.fontSize = '14px';
-                            t.style.boxShadow = '0 2px 8px rgba(0,0,0,.2)';
-                            t.style.background = (type === 'error') ? '#d9534f' : '#28a745';
-                            c.appendChild(t);
-                            setTimeout(function(){ try { c.removeChild(t); } catch(e){} }, 2500);
-                        } catch(e) {
-                            // Último recurso
-                            if (type === 'error') {
-                                console.error(msg);
-                            } else {
-                                console.log(msg);
-                            }
-                        }
-                    };
-                }
-
-                // Inicializar DataTables en la tabla como estaba antes (si está disponible)
-                try {
-                    if (window.jQuery && (jQuery.fn.DataTable || jQuery.fn.dataTable)) {
-                        var $ = jQuery;
-                        $('.dspace-table').each(function(){
-                            try {
-                                if ($.fn.DataTable.isDataTable(this)) return;
-                            } catch(e) {}
-                            $(this).DataTable({
-                                paging: true,
-                                searching: true,
-                                ordering: true,
-                                info: true,
-                                language: {
-                                    url: (window.M && M.util && M.util.get_strings && false) ? '' : '',
-                                    search: 'Buscar:',
-                                    lengthMenu: 'Mostrar _MENU_ entradas',
-                                    info: 'Mostrando _START_ a _END_ de _TOTAL_ entradas',
-                                    paginate: { previous: 'Anterior', next: 'Siguiente' },
-                                    zeroRecords: 'No se encontraron resultados'
-                                }
-                            });
-                        });
-                    }
-                } catch(e) { /* silencioso */ }
-
-                // Agregar URL+Nombre de bitstream SIEMPRE a la descripción de la tarea (intro)
-                window.addToAssignmentDetails = async function(url, name){
-                    try {
-                        // Helpers
-                        function injectList(html){
-                            if (html.indexOf(url) !== -1) { return {html: html, added: false, dup: true}; }
-                            if (html.indexOf('id="dspace-external-resources"') === -1) {
-                                html += '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
-                            }
-                            html = html.replace(/(<div[^>]*id="dspace-external-resources"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
-                                return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
-                            });
-                            return {html: html, added: true, dup: false};
-                        }
-
-                        function matchesIntroIdName(el){
-                            var id = (el.id||'').toLowerCase();
-                            var nm = (el.name||'').toLowerCase();
-                            return /(\b|_)intro(editor)?(\b|$)/.test(id) || /(\b|_)intro(editor)?(\b|$)/.test(nm);
-                        }
-
-                        // 1) TinyMCE: localizar específicamente el editor de "intro"/"introeditor"
-                        if (window.tinymce) {
-                            var targetEditor = null;
-                            if (tinymce.editors && tinymce.editors.length) {
-                                for (var i=0;i<tinymce.editors.length;i++){
-                                    var ed = tinymce.editors[i];
-                                    if (!ed) continue;
-                                    var t = ed.targetElm;
-                                    if (t && matchesIntroIdName(t)) { targetEditor = ed; break; }
-                                }
-                            }
-                            if (!targetEditor && tinymce.activeEditor && tinymce.activeEditor.targetElm && matchesIntroIdName(tinymce.activeEditor.targetElm)) {
-                                targetEditor = tinymce.activeEditor;
-                            }
-                            if (targetEditor) {
-                                var content = targetEditor.getContent({format:'html'}) || '';
-                                var res = injectList(content);
-                                if (res.dup) { showToast('Este recurso ya está agregado.', ''); return; }
-                                targetEditor.setContent(res.html);
-                                showToast('Recurso agregado a la descripción de la tarea.', '');
-                                return;
-                            }
-                        }
-
-                        // 2) Atto: localizar el wrapper relacionado con intro/introeditor
-                        var introTextarea = Array.from(document.querySelectorAll('textarea')).find(function(el){ return matchesIntroIdName(el); });
-                        var attoWrapper = introTextarea ? introTextarea.closest('.editor_atto') : null;
-                        var atto = attoWrapper ? attoWrapper.querySelector('.editor_atto_content') : null;
-                        if (atto) {
-                            var html = atto.innerHTML || '';
-                            var res2 = injectList(html);
-                            if (res2.dup) { showToast('Este recurso ya está agregado.', ''); return; }
-                            atto.innerHTML = res2.html;
-                            var ta = attoWrapper.querySelector('textarea');
-                            if (ta) { ta.value = atto.innerHTML; }
-                            showToast('Recurso agregado a la descripción de la tarea.', '');
-                            return;
-                        }
-
                         // 3) Fallback a textarea del campo intro/introeditor exclusivamente
                         if (introTextarea) {
                             var val = introTextarea.value || '';
@@ -170,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function(){
                             } else {
                                 introTextarea.value = val + line;
                             }
+                            try { introTextarea.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
+                            try { introTextarea.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
                             showToast('Recurso agregado a la descripción de la tarea.', '');
                             return;
                         }
@@ -181,6 +23,15 @@ document.addEventListener('DOMContentLoaded', function(){
                         try { await navigator.clipboard.writeText(url); } catch(_){}
                     }
                 };
+
+                // Delegación para botones Agregar usando data-attrs
+                document.addEventListener('click', function(ev){
+                    var btn = ev.target && ev.target.closest('.btn-dspace-add');
+                    if (!btn) return;
+                    var url = btn.getAttribute('data-url') || '';
+                    var name = btn.getAttribute('data-name') || '';
+                    if (url) { window.addToAssignmentDetails(url, name); }
+                });
             });
 JS;
         $PAGE->requires->js_init_code($customjs);
@@ -318,7 +169,7 @@ JS;
                                             // Botón para agregar URL del bitstream a los detalles de la tarea
                                             $safeAddUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
                                             $safeNameJs = htmlspecialchars($bitName, ENT_QUOTES, 'UTF-8');
-                                            $addHtml .= "<div class='dspace-bit-row'><button type='button' class='btn btn-sm btn-success' onclick=\"addToAssignmentDetails('{$safeAddUrl}', '{$safeNameJs}')\">Agregar</button></div>";
+                                            $addHtml .= "<div class='dspace-bit-row'><button type='button' class='btn btn-sm btn-success btn-dspace-add' data-url='{$safeAddUrl}' data-name='{$safeNameJs}'>Agregar</button></div>";
                                         }
                                     }
                                 }
