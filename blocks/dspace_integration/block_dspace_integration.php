@@ -365,7 +365,7 @@ class block_dspace_integration extends block_base {
                                             $downloadUrl = "http://192.168.1.27:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
                                             // Checkbox + texto por fila, alineado al inicio
-                                            $bitstreamHtml .= "<div class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div><br>";
+                                            $bitstreamHtml .= "<div class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div>";
 
                                             // Construcción de enlaces de previsualización por tipo
                                             $ext = strtolower(pathinfo($bitstream['name'] ?? '', PATHINFO_EXTENSION));
@@ -399,7 +399,7 @@ class block_dspace_integration extends block_base {
                                     <tr>
                                         <td class='dspace-col-item'><span class='badge bg-light text-dark'>{$title}</span></td>
                                         <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-                                            <span class='badge bg-light text-dark dspace-bit-badge text-center'>{$bitstreamHtml}</span>
+                                            <span class='badge bg-light text-dark dspace-bit-badge text-center'>{$bitstreamHtml}</span><br>
                                         </td>
                                         <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
                                             {$previewHtml}
