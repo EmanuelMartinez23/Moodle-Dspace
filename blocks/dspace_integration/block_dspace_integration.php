@@ -10,6 +10,45 @@
                     window.open(url, '_blank', 'noopener');
                 };
 
+                // Toast mínimo por si no existe showToast (evitar errores en páginas sin bloque visible)
+                if (typeof window.showToast !== 'function') {
+                    window.showToast = function(msg, type){
+                        try {
+                            // Crear contenedor si no existe
+                            var c = document.getElementById('dspace-toast-container');
+                            if (!c) {
+                                c = document.createElement('div');
+                                c.id = 'dspace-toast-container';
+                                c.style.position = 'fixed';
+                                c.style.zIndex = '99999';
+                                c.style.top = '16px';
+                                c.style.right = '16px';
+                                c.style.display = 'flex';
+                                c.style.flexDirection = 'column';
+                                c.style.gap = '8px';
+                                document.body.appendChild(c);
+                            }
+                            var t = document.createElement('div');
+                            t.textContent = msg || '';
+                            t.style.padding = '10px 12px';
+                            t.style.borderRadius = '6px';
+                            t.style.color = '#fff';
+                            t.style.fontSize = '14px';
+                            t.style.boxShadow = '0 2px 8px rgba(0,0,0,.2)';
+                            t.style.background = (type === 'error') ? '#d9534f' : '#28a745';
+                            c.appendChild(t);
+                            setTimeout(function(){ try { c.removeChild(t); } catch(e){} }, 2500);
+                        } catch(e) {
+                            // Último recurso
+                            if (type === 'error') {
+                                console.error(msg);
+                            } else {
+                                console.log(msg);
+                            }
+                        }
+                    };
+                }
+
                 // Agregar URL+Nombre de bitstream a los detalles de la tarea (intro/descripcion)
                 window.addToAssignmentDetails = async function(url, name){
                     try {
@@ -19,11 +58,11 @@
                             let content = ed.getContent({format:'html'}) || '';
                             if (content.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
                             // Asegurar sección "Recursos externos"
-                            if (content.indexOf('id=\"dspace-external-resources\"') === -1) {
+                            if (content.indexOf('id="dspace-external-resources"') === -1) {
                                 content += '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
                             }
-                            // Insertar <li>
-                            content = content.replace(/(<div[^>]*id=\\\"dspace-external-resources\\\"[^>]*>.*?<ul[^>]*>)([\\s\\S]*?)(<\\/ul>)/, function(m, a, b, c){
+                            // Insertar <li> dentro del UL de la sección
+                            content = content.replace(/(<div[^>]*id="dspace-external-resources"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
                                 return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
                             });
                             ed.setContent(content);
@@ -38,7 +77,7 @@
                             if (html.indexOf('id="dspace-external-resources"') === -1) {
                                 html += '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
                             }
-                            html = html.replace(/(<div[^>]*id=\"dspace-external-resources\"[^>]*>.*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
+                            html = html.replace(/(<div[^>]*id="dspace-external-resources"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
                                 return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
                             });
                             atto.innerHTML = html;
