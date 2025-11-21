@@ -25,7 +25,7 @@ class block_dspace_integration extends block_base {
 
         // Estilos mínimos para evitar desbordes en tabla y buscador (inyectados inline para compatibilidad)
         $customcss = "
-            .block_dspace_integration .dspace-table-wrap { width: 100%; overflow-x: auto; }
+            .block_dspace_integration .dspace-table-wrap { width: 100%; overflow-x: auto; position: relative; }
             .block_dspace_integration .dataTables_wrapper { width: 100%; overflow-x: auto; }
             /* Permitimos el wrap natural; el scroll aparece si el contenido supera el ancho */
             .block_dspace_integration table.dspace-table { table-layout: auto; }
@@ -43,11 +43,16 @@ class block_dspace_integration extends block_base {
             /* El contenedor usa display:block para forzar salto de línea entre filas */
             .block_dspace_integration .dspace-bit-badge { display: block; padding: 6px 8px; }
             .block_dspace_integration .dspace-preview-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+            /* Loader mientras DataTables inicializa */
+            .block_dspace_integration .dspace-loader { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.85); z-index: 5; }
+            .block_dspace_integration .dspace-spinner { width: 42px; height: 42px; border: 4px solid #e9ecef; border-top-color: #0d6efd; border-radius: 50%; animation: dspace-spin 0.9s linear infinite; }
+            @keyframes dspace-spin { to { transform: rotate(360deg); } }
+            .block_dspace_integration .dspace-hidden { visibility: hidden; }
         ";
 
         $customjs = <<<'JS'
             $(document).ready(function() {
-                // Cargador robusto de DataTables con hasta 2 reintentos.
+                // Cargador robusto de DataTables: reintentos periódicos y loader visual.
                 (function(){
                     var CDN = {
                         css: 'https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/css/dataTables.bootstrap5.min.css',
@@ -96,21 +101,49 @@ class block_dspace_integration extends block_base {
                                     { width: '160px', targets: 3 }
                                 ]
                             });
+                            // Mostrar tabla y quitar loader si existe
+                            try {
+                                $t.removeClass('dspace-hidden');
+                                var $wrap = $t.closest('.dspace-table-wrap');
+                                $wrap.find('.dspace-loader').remove();
+                            } catch(e){}
                         });
                         return true;
                     }
 
-                    // Intento inmediato
-                    if (!initTablesIfReady()) {
-                        ensureDTLoaded();
-                        // Reintento 1 (~600ms)
-                        setTimeout(function(){
-                            if (!initTablesIfReady()) {
-                                // Reintento 2 (~1200ms)
-                                setTimeout(function(){ initTablesIfReady(); }, 600);
+                    // Preparar loaders y ocultar tablas mientras no esté DataTables listo.
+                    (function prepareLoaders(){
+                        var $ = window.jQuery || window.$;
+                        var nodes = document.querySelectorAll('.block_dspace_integration .dspace-table');
+                        for (var i=0;i<nodes.length;i++){
+                            var t = nodes[i];
+                            if (!t.classList.contains('dspace-hidden')) t.classList.add('dspace-hidden');
+                            var wrap = t.closest('.dspace-table-wrap');
+                            if (wrap && !wrap.querySelector(':scope > .dspace-loader')){
+                                var ld = document.createElement('div');
+                                ld.className = 'dspace-loader';
+                                ld.innerHTML = '<div class="dspace-spinner" aria-label="Cargando tabla..."></div>';
+                                wrap.appendChild(ld);
                             }
-                        }, 600);
-                    }
+                        }
+                    })();
+
+                    // Intentar cargar y luego reintentar periódicamente hasta que esté listo.
+                    ensureDTLoaded();
+                    var started = Date.now();
+                    var interval = 600; // ms
+                    var maxWait = 15000; // 15s de espera "razonable" antes de avisar (seguimos intentando después)
+                    var warned = false;
+                    var h = setInterval(function(){
+                        try { ensureDTLoaded(); } catch(_){ }
+                        if (initTablesIfReady()) { clearInterval(h); return; }
+                        if (!warned && (Date.now() - started) > maxWait) {
+                            warned = true;
+                            if (typeof window.showToast === 'function') {
+                                window.showToast('Aún cargando DataTables… verificando conexión al CDN', 'error');
+                            }
+                        }
+                    }, interval);
                 })();
 
                 // Funciones auxiliares de previsualización
