@@ -399,7 +399,7 @@ class block_dspace_integration extends block_base {
                                     <tr>
                                         <td class='dspace-col-item'><span class='badge bg-light text-dark'>{$title}</span></td>
                                         <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
-                                            <span class='badge bg-light text-dark dspace-bit-badge text-center'>{$bitstreamHtml}</span><br>
+                                            <span class='badge bg-light text-dark dspace-bit-badge text-center'>{$bitstreamHtml}</span>
                                         </td>
                                         <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
                                             {$previewHtml}
