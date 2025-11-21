@@ -141,6 +141,10 @@ include_course_ajax($SITE, $modnamesused);
 
 echo $courserenderer->frontpage();
 
+if ($editing && has_capability('moodle/course:create', context_system::instance())) {
+    echo $courserenderer->add_new_course_button();
+}
+
 // Sección extra debajo de cursos: Formulario de subida a DSpace (solo visible en modo edición).
 if ($editing) {
     try {
@@ -274,7 +278,5 @@ if ($editing) {
     }
 }
 
-if ($editing && has_capability('moodle/course:create', context_system::instance())) {
-    echo $courserenderer->add_new_course_button();
-}
+
 echo $OUTPUT->footer();
