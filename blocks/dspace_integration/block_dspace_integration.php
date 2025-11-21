@@ -1,4 +1,28 @@
 
+<?php
+defined('MOODLE_INTERNAL') || die();
+
+class block_dspace_integration extends block_base {
+
+    public function init() {
+        $this->title = 'DSpace Integration';
+    }
+
+    public function get_content() {
+        global $PAGE;
+
+        if ($this->content !== null) {
+            return $this->content;
+        }
+        $this->content = new stdClass();
+
+        // CSS mínimo para evitar variable indefinida; puede ser ampliado si es necesario.
+        $customcss = '';
+
+        // Asegurar que el bloque no imprima JS “en crudo”.
+        // Encapsulamos el script dentro de un nowdoc y lo pasamos a js_init_code más abajo.
+        $customjs = <<<'JS'
+document.addEventListener('DOMContentLoaded', function(){
                 // Funciones auxiliares de previsualización
                 window.openPreviewWindow = function(url) {
                     // Abre en una nueva ventana/pestaña para evitar problemas de sandboxing en iframes
@@ -120,7 +144,7 @@
                     }
                 };
             });
-        JS;
+JS;
         $PAGE->requires->js_init_code($customjs);
 
         $dspaceApiUrl = get_config('block_dspace_integration', 'server');
