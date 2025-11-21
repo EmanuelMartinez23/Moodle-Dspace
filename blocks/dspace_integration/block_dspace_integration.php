@@ -29,21 +29,24 @@ class block_dspace_integration extends block_base {
             .block_dspace_integration .dataTables_wrapper { width: 100%; overflow-x: auto; }
             /* Permitimos el wrap natural; el scroll aparece si el contenido supera el ancho */
             .block_dspace_integration table.dspace-table { table-layout: auto; }
-            .block_dspace_integration table.dspace-table th, .block_dspace_integration table.dspace-table td { white-space: normal; }
+            .block_dspace_integration table.dspace-table th, .block_dspace_integration table.dspace-table td { white-space: normal; vertical-align: middle; }
             .block_dspace_integration .dataTables_filter { float: right; }
-            /* Centrados específicos solicitados */
-            .block_dspace_integration .dspace-col-bitstreams,
-            .block_dspace_integration .dspace-col-preview { text-align: center; vertical-align: middle; }
+            /* Alineación solicitada: Item y Bitstreams a la izquierda y centrado vertical */
+            .block_dspace_integration .dspace-col-item,
+            .block_dspace_integration .dspace-col-bitstreams { text-align: left; vertical-align: middle; }
+            /* Previsualizar al centro (visual) */
+            .block_dspace_integration .dspace-col-preview,
+            .block_dspace_integration .dspace-col-add { text-align: center; vertical-align: middle; }
             .block_dspace_integration .dspace-bit-row { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0; }
             .block_dspace_integration .dspace-bit-row input[type=checkbox] { margin: 0; }
-            .block_dspace_integration .dspace-bit-badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; }
+            .block_dspace_integration .dspace-bit-badge { display: inline-flex; align-items: center; justify-content: flex-start; padding: 6px 8px; }
             .block_dspace_integration .dspace-preview-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
         ";
 
-        $customjs = "
-            \$(document).ready(function() {
+        $customjs = <<<'JS'
+            $(document).ready(function() {
                 if ($.fn && $.fn.DataTable) {
-                  \$('.dspace-table').DataTable({
+                  $('.dspace-table').DataTable({
                     pageLength: 5,
                     lengthMenu: [ [5, 10, 15, 25, 50], [5, 10, 15, 25, 50] ],
                     lengthChange: true,
@@ -56,7 +59,8 @@ class block_dspace_integration extends block_base {
                     columnDefs: [
                         { width: '220px', targets: 0 },
                         { width: '360px', targets: 1 },
-                        { width: '360px', targets: 2 }
+                        { width: '260px', targets: 2 },
+                        { width: '160px', targets: 3 }
                     ]
                   });
                 }
@@ -71,8 +75,56 @@ class block_dspace_integration extends block_base {
                     alert('Para previsualizar un paquete SCORM es necesario que el paquete esté desplegado en un servidor web. Intentaremos abrir el archivo, pero si no se muestra, contacte con el administrador.');
                     window.open(url, '_blank', 'noopener');
                 };
+
+                // Agregar URL de bitstream a los detalles de la tarea (intro/descripcion)
+                window.addToAssignmentDetails = async function(url){
+                    try {
+                        // 1) TinyMCE
+                        if (window.tinymce && tinymce.activeEditor) {
+                            const ed = tinymce.activeEditor;
+                            let content = ed.getContent({format:'html'}) || '';
+                            if (content.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
+                            ed.insertContent('<p><a href="'+url+'" target="_blank" rel="noopener">'+url+'</a></p>');
+                            return;
+                        }
+                        // 2) Atto (div editable)
+                        var atto = document.querySelector('.editor_atto_content');
+                        if (atto) {
+                            var html = atto.innerHTML || '';
+                            if (html.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
+                            atto.innerHTML = html + '<p><a href="'+url+'" target="_blank" rel="noopener">'+url+'</a></p>';
+                            // Intentar actualizar textarea subyacente si existe
+                            var attoWrapper = atto.closest('.editor_atto');
+                            if (attoWrapper) {
+                                var ta = attoWrapper.querySelector('textarea');
+                                if (ta) { ta.value = atto.innerHTML; }
+                            }
+                            return;
+                        }
+                        // 3) Textareas comunes
+                        var candidates = Array.from(document.querySelectorAll('textarea'))
+                          .filter(function(el){
+                              var id = (el.id||'').toLowerCase();
+                              var name = (el.name||'').toLowerCase();
+                              return /intro|description|onlinetext/.test(id+" "+name);
+                          });
+                        var target = candidates[0] || document.querySelector('textarea');
+                        if (target) {
+                            var val = target.value || '';
+                            if (val.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
+                            target.value = (val ? (val+"\n") : '') + url;
+                            return;
+                        }
+                        // 4) Fallback: copiar al portapapeles
+                        await navigator.clipboard.writeText(url);
+                        alert('No se encontró el editor de la tarea. La URL se copió al portapapeles, pégala en los detalles.');
+                    } catch(e){
+                        alert('No fue posible agregar automáticamente. Copiamos la URL al portapapeles.');
+                        try { await navigator.clipboard.writeText(url); } catch(_){}
+                    }
+                };
             });
-        ";
+        JS;
         $PAGE->requires->js_init_code($customjs);
 
         $dspaceApiUrl = get_config('block_dspace_integration', 'server');
@@ -143,9 +195,10 @@ class block_dspace_integration extends block_base {
                                 <table class='table table-striped table-bordered dspace-table display' style='width:100%;'>
                                     <thead>
                                         <tr>
-                                            <th style='width:220px; word-wrap:break-word;'>Item</th>
+                                            <th class='dspace-col-item' style='width:220px; word-wrap:break-word;'>Item</th>
                                             <th class='dspace-col-bitstreams' style='width:360px; word-wrap:break-word;'>Bitstreams</th>
-                                            <th class='dspace-col-preview' style='width:360px; word-wrap:break-word;'>Previsualizar</th>
+                                            <th class='dspace-col-preview' style='width:260px; word-wrap:break-word;'>Previsualizar</th>
+                                            <th class='dspace-col-add' style='width:160px; word-wrap:break-word;'>Agregar a tarea</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -155,6 +208,7 @@ class block_dspace_integration extends block_base {
 
                                 $bitstreamHtml = '';
                                 $previewHtml = '';
+                                $addHtml = '';
                                 if (isset($item['_links']['bundles']['href'])) {
                                     try {
                                         $bundlesData = $this->makeGetRequest($item['_links']['bundles']['href']."?size=1000", $token);
@@ -180,8 +234,8 @@ class block_dspace_integration extends block_base {
                                             // URL de descarga directa desde DSpace REST (usar el mismo host configurado para descargas)
                                             $downloadUrl = "http://192.168.1.27:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
-                                            // Checkbox + texto centrados por fila
-                                            $bitstreamHtml .= "<div class='text-center'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div>";				    //$bitstreamHtml .= "[{$downloadBadge}] <label> {$bitName}</label> <br>";
+                                            // Checkbox + texto por fila, alineado al inicio
+                                            $bitstreamHtml .= "<div class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div>";
 
                                             // Construcción de enlaces de previsualización por tipo
                                             $ext = strtolower(pathinfo($bitstream['name'] ?? '', PATHINFO_EXTENSION));
@@ -202,21 +256,28 @@ class block_dspace_integration extends block_base {
                                                 // Otros tipos: sin previsualización disponible
                                                 $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span><br>";
                                             }
+
+                                            // Botón para agregar URL del bitstream a los detalles de la tarea
+                                            $safeAddUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
+                                            $addHtml .= "<div class='dspace-bit-row'><button type='button' class='btn btn-sm btn-success' onclick=\"addToAssignmentDetails('{$safeAddUrl}')\">Agregar</button></div>";
                                         }
                                     }
                                 }
 
                                 $this->content->text .= "
-    <tr>
-        <td class='text-center' style='vertical-align: top;'><span class='badge bg-light text-dark'>{$title}</span></td>
-        <td class='text-center' style='word-break: break-word; white-space: normal; overflow-wrap: break-word; vertical-align: top;'>
-            {$bitstreamHtml}
-        </td>
-        <td class='text-center' style='word-break: break-word; white-space: normal; overflow-wrap: break-word; vertical-align: top;'>
-            {$previewHtml}
-        </td>
-    </tr>
-";
+                                    <tr>
+                                        <td class='dspace-col-item'><span class='badge bg-light text-dark'>{$title}</span></td>
+                                        <td class='dspace-col-bitstreams' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+                                            <span class='badge bg-light text-dark dspace-bit-badge text-center'>{$bitstreamHtml}</span>
+                                        </td>
+                                        <td class='dspace-col-preview' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+                                            {$previewHtml}
+                                        </td>
+                                        <td class='dspace-col-add' style='word-break: break-word; white-space: normal; overflow-wrap: break-word;'>
+                                            {$addHtml}
+                                        </td>
+                                    </tr>
+                                ";
                             }
 
                             $this->content->text .= "</tbody></table></div>";
