@@ -32,7 +32,7 @@ try {
     // Incorporar usuario y fecha en el título enviado a DSpace, según requerimiento.
     $combinedtitle = trim($title . ' — ' . $uploader . ' — ' . $dateissued);
     $metadata = [
-        "dc.title" => [["value" => $combinedtitle, "language" => "es"]],
+        "dc.title" => [["value" => $title, "language" => "es"]],
         "dc.description" => [["value" => "Subida desde Moodle", "language" => "es"]],
         "dc.contributor.author" => [["value" => $uploader, "language" => "es"]],
         "dc.date.issued" => [["value" => $dateissued, "language" => "es"]]
