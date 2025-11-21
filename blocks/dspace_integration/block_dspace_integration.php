@@ -116,10 +116,10 @@ class block_dspace_integration extends block_base {
                         function injectListHTML(html){
                             if ((html||'').indexOf(url) !== -1) { return {html: html, added: false, dup: true}; }
                             if ((html||'').indexOf('id="dspace-external-resources"') === -1) {
-                                html = (html||'') + '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul style="list-style:none;padding-left:0;margin-left:0;"></ul></div>';
+                                html = (html||'') + '\n<div id="dspace-external-resources"><h3>Recursos Externos</h3><ul style="list-style:none;padding-left:0;margin-left:0;"></ul></div>';
                             }
                             html = html.replace(/(<div[^>]*id=\"dspace-external-resources\"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
-                                return a + b + '<li style="margin:4px 0;">+ <a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
+                                return a + b + '<li style="margin:4px 0;">* <a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
                             });
                             return {html: html, added: true, dup: false};
                         }
@@ -128,14 +128,14 @@ class block_dspace_integration extends block_base {
                         function injectListText(text){
                             var current = String(text||'');
                             if (current.indexOf(url) !== -1) { return {text: current, added: false, dup: true}; }
-                            var header = 'Recursos externos';
+                            var header = 'Recursos Externos';
                             var block = '';
                             if (current.indexOf(header) === -1) {
                                 // Crear una nueva sección al final
                                 block = (current.trim().length ? '\n\n' : '') + header + '\n\n';
                             }
                             // Agregar ítem en formato legible sin HTML
-                            block += '+ ' + (name || url) + ' - ' + url + '\n';
+                            block += '* ' + (name || url) + ' - ' + url + '\n';
                             return {text: current + block, added: true, dup: false};
                         }
 
