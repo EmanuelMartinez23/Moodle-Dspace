@@ -37,9 +37,11 @@ class block_dspace_integration extends block_base {
             /* Previsualizar al centro (visual) */
             .block_dspace_integration .dspace-col-preview,
             .block_dspace_integration .dspace-col-add { text-align: center; vertical-align: middle; }
-            .block_dspace_integration .dspace-bit-row { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0; }
+            /* Cada bitstream debe ir en su propia línea */
+            .block_dspace_integration .dspace-bit-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; width: 100%; }
             .block_dspace_integration .dspace-bit-row input[type=checkbox] { margin: 0; }
-            .block_dspace_integration .dspace-bit-badge { display: inline-flex; align-items: center; justify-content: flex-start; padding: 6px 8px; }
+            /* El contenedor usa display:block para forzar salto de línea entre filas */
+            .block_dspace_integration .dspace-bit-badge { display: block; padding: 6px 8px; }
             .block_dspace_integration .dspace-preview-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
         ";
 
