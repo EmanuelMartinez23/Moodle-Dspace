@@ -108,6 +108,7 @@ class block_dspace_integration extends block_base {
                 }
 
                 // Agregar URL+Nombre de bitstream SIEMPRE a la descripción de la tarea (intro)
+                // Mejora: reintentos automáticos si el editor (TinyMCE/Atto) aún no terminó de inicializarse
                 window.addToAssignmentDetails = async function(url, name){
                     try {
                         if (!url) { showToast('URL inválida.', 'error'); return; }
@@ -146,33 +147,40 @@ class block_dspace_integration extends block_base {
                         }
 
                         // 1) TinyMCE: localizar editor de intro/introeditor, guardar y disparar change
+                        var attempt = 0;
+                        var maxAttempts = 8; // ~8 * 200ms = 1.6s
                         if (window.tinymce) {
-                            var targetEditor = null;
-                            if (tinymce.editors && tinymce.editors.length) {
-                                for (var i=0;i<tinymce.editors.length;i++){
-                                    var ed = tinymce.editors[i];
-                                    if (!ed) continue;
-                                    var t = ed.targetElm;
-                                    if (t && matchesIntroIdName(t)) { targetEditor = ed; break; }
+                            while (attempt < maxAttempts) {
+                                var targetEditor = null;
+                                if (tinymce.editors && tinymce.editors.length) {
+                                    for (var i=0;i<tinymce.editors.length;i++){
+                                        var ed = tinymce.editors[i];
+                                        if (!ed) continue;
+                                        var t = ed.targetElm;
+                                        if (t && matchesIntroIdName(t)) { targetEditor = ed; break; }
+                                    }
                                 }
-                            }
-                            if (!targetEditor && tinymce.activeEditor && tinymce.activeEditor.targetElm && matchesIntroIdName(tinymce.activeEditor.targetElm)) {
-                                targetEditor = tinymce.activeEditor;
-                            }
-                            if (targetEditor) {
-                                var content = targetEditor.getContent({format:'html'}) || '';
-                                var res = injectListHTML(content);
-                                if (res.dup) { showToast('Este recurso ya está agregado.', ''); return; }
-                                try { targetEditor.focus(); } catch(_){ }
-                                targetEditor.setContent(res.html);
-                                if (typeof targetEditor.save === 'function') { try { targetEditor.save(); } catch(_){ } }
-                                var ta = targetEditor.targetElm;
-                                if (ta) {
-                                    try { ta.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
-                                    try { ta.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+                                if (!targetEditor && tinymce.activeEditor && tinymce.activeEditor.targetElm && matchesIntroIdName(tinymce.activeEditor.targetElm)) {
+                                    targetEditor = tinymce.activeEditor;
                                 }
-                                showToast('Recurso agregado a la descripción de la tarea.', '');
-                                return;
+                                if (targetEditor) {
+                                    var content = targetEditor.getContent({format:'html'}) || '';
+                                    var res = injectListHTML(content);
+                                    if (res.dup) { showToast('Este recurso ya está agregado.', ''); return; }
+                                    try { targetEditor.focus(); } catch(_){ }
+                                    targetEditor.setContent(res.html);
+                                    if (typeof targetEditor.save === 'function') { try { targetEditor.save(); } catch(_){ } }
+                                    var ta = targetEditor.targetElm;
+                                    if (ta) {
+                                        try { ta.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
+                                        try { ta.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+                                    }
+                                    showToast('Recurso agregado a la descripción de la tarea.', '');
+                                    return;
+                                }
+                                // Si TinyMCE existe pero aún no hallamos el editor correcto, esperar y reintentar
+                                attempt++;
+                                await new Promise(function(r){ setTimeout(r, 200); });
                             }
                         }
 
@@ -220,6 +228,9 @@ class block_dspace_integration extends block_base {
                 document.addEventListener('click', function(ev){
                     var btn = ev.target && ev.target.closest('.btn-dspace-add');
                     if (!btn) return;
+                    // Evitar que cualquier comportamiento por defecto o burbujeo afecte el primer clic
+                    try { ev.preventDefault(); } catch(_){}
+                    try { ev.stopPropagation(); } catch(_){}
                     var url = btn.getAttribute('data-url') || '';
                     var name = btn.getAttribute('data-name') || '';
                     if (url) { window.addToAssignmentDetails(url, name); }
