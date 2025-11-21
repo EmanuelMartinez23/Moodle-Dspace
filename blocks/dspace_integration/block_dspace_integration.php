@@ -47,25 +47,71 @@ class block_dspace_integration extends block_base {
 
         $customjs = <<<'JS'
             $(document).ready(function() {
-                if ($.fn && $.fn.DataTable) {
-                  $('.dspace-table').DataTable({
-                    pageLength: 5,
-                    lengthMenu: [ [5, 10, 15, 25, 50], [5, 10, 15, 25, 50] ],
-                    lengthChange: true,
-                    searching: true,
-                    ordering: true,
-                    autoWidth: false,
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.13.1/i18n/es-ES.json'
-                    },
-                    columnDefs: [
-                        { width: '220px', targets: 0 },
-                        { width: '360px', targets: 1 },
-                        { width: '260px', targets: 2 },
-                        { width: '160px', targets: 3 }
-                    ]
-                  });
-                }
+                // Cargador robusto de DataTables con hasta 2 reintentos.
+                (function(){
+                    var CDN = {
+                        css: 'https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/css/dataTables.bootstrap5.min.css',
+                        jsjq: 'https://cdn.jsdelivr.net/npm/datatables.net@1.13.1/js/jquery.dataTables.min.js',
+                        jsbs: 'https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/js/dataTables.bootstrap5.min.js'
+                    };
+
+                    function injectOnce(tag, attrs){
+                        var id = attrs.id;
+                        if (id && document.getElementById(id)) return;
+                        var el = document.createElement(tag);
+                        for (var k in attrs){ if (k !== 'inner' && Object.prototype.hasOwnProperty.call(attrs,k)) el.setAttribute(k, attrs[k]); }
+                        if (attrs.inner) el.innerHTML = attrs.inner;
+                        (document.head || document.documentElement).appendChild(el);
+                    }
+
+                    function ensureDTLoaded(){
+                        // jQuery ya es solicitado por el bloque ($PAGE->requires->jquery()), pero validamos.
+                        if (!(window.jQuery && jQuery.fn)) return false;
+                        // CSS
+                        injectOnce('link', {id: 'dt-bs5-css', rel: 'stylesheet', href: CDN.css});
+                        // Núcleo y Bootstrap 5
+                        injectOnce('script', {id: 'dt-core-js', src: CDN.jsjq});
+                        injectOnce('script', {id: 'dt-bs5-js', src: CDN.jsbs});
+                        return !!(jQuery.fn && (jQuery.fn.DataTable || jQuery.fn.dataTable));
+                    }
+
+                    function initTablesIfReady(){
+                        var $ = window.jQuery || window.$;
+                        if (!($ && $.fn && ($.fn.DataTable || $.fn.dataTable))) return false;
+                        $('.dspace-table').each(function(){
+                            var $t = $(this);
+                            if ($.fn.dataTable && $.fn.dataTable.isDataTable && $.fn.dataTable.isDataTable(this)) return; // evitar doble init
+                            $t.DataTable({
+                                pageLength: 5,
+                                lengthMenu: [ [5, 10, 15, 25, 50], [5, 10, 15, 25, 50] ],
+                                lengthChange: true,
+                                searching: true,
+                                ordering: true,
+                                autoWidth: false,
+                                language: { url: '//cdn.datatables.net/plug-ins/1.13.1/i18n/es-ES.json' },
+                                columnDefs: [
+                                    { width: '220px', targets: 0 },
+                                    { width: '360px', targets: 1 },
+                                    { width: '260px', targets: 2 },
+                                    { width: '160px', targets: 3 }
+                                ]
+                            });
+                        });
+                        return true;
+                    }
+
+                    // Intento inmediato
+                    if (!initTablesIfReady()) {
+                        ensureDTLoaded();
+                        // Reintento 1 (~600ms)
+                        setTimeout(function(){
+                            if (!initTablesIfReady()) {
+                                // Reintento 2 (~1200ms)
+                                setTimeout(function(){ initTablesIfReady(); }, 600);
+                            }
+                        }, 600);
+                    }
+                })();
 
                 // Funciones auxiliares de previsualización
                 window.openPreviewWindow = function(url) {
