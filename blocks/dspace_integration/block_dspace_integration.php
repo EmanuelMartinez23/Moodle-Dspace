@@ -16,8 +16,17 @@ class block_dspace_integration extends block_base {
         }
         $this->content = new stdClass();
 
-        // CSS mínimo para evitar variable indefinida; puede ser ampliado si es necesario.
-        $customcss = '';
+        // CSS del bloque (alineaciones y soporte de scroll para DataTables)
+        $customcss = '
+            .block_dspace_integration .dspace-table-wrap{ overflow-x:auto; }
+            .block_dspace_integration table.dspace-table{ width:100%; }
+            .block_dspace_integration table.dspace-table th,
+            .block_dspace_integration table.dspace-table td{ vertical-align: middle !important; }
+            .block_dspace_integration .dspace-col-item,
+            .block_dspace_integration .dspace-col-bitstreams{ text-align:left; vertical-align:middle; }
+            .block_dspace_integration .dspace-col-preview,
+            .block_dspace_integration .dspace-col-add{ text-align:center; }
+        ';
 
         // Asegurar que el bloque no imprima JS “en crudo”.
         // Encapsulamos el script dentro de un nowdoc y lo pasamos a js_init_code más abajo.
@@ -73,12 +82,75 @@ document.addEventListener('DOMContentLoaded', function(){
                     };
                 }
 
-                // Agregar URL+Nombre de bitstream a los detalles de la tarea (intro/descripcion)
+                // Utilidades DataTables: carga garantizada e inicialización
+                (function ensureDataTables(){
+                    function loadScript(src){ return new Promise(function(res, rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+                    function loadCSS(href){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=href; document.head.appendChild(l); }
+                    // Cargar jQuery si no existe (DataTables requiere jQuery)
+                    var needJQ = (typeof window.jQuery === 'undefined');
+                    var jqPromise = needJQ ? loadScript('https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js') : Promise.resolve();
+                    // Cargar DataTables CSS/JS
+                    loadCSS('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/css/dataTables.bootstrap5.min.css');
+                    Promise.resolve().then(function(){ return jqPromise; }).then(function(){
+                        if (typeof jQuery.fn.DataTable === 'function') { return; }
+                        return loadScript('https://cdn.jsdelivr.net/npm/datatables.net@1.13.1/js/jquery.dataTables.min.js')
+                          .then(function(){ return loadScript('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/js/dataTables.bootstrap5.min.js'); });
+                    }).then(function(){ try { initDspaceTables(); } catch(e){} });
+                })();
+
+                function initDspaceTables(context){
+                    var $ = window.jQuery; if (!$) return;
+                    var root = context || document;
+                    $(root).find('table.dspace-table').each(function(){
+                        var $tbl = $(this);
+                        if ($tbl.hasClass('dt-initialized')) return;
+                        try {
+                            $tbl.addClass('dt-initialized').DataTable({
+                                paging: true,
+                                searching: true,
+                                ordering: true,
+                                info: true,
+                                lengthChange: true,
+                                autoWidth: false,
+                                scrollX: true,
+                                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.1/i18n/es-ES.json' },
+                                columnDefs: [
+                                    { targets: [0,1], className: 'text-start align-middle' },
+                                    { targets: [2,3], className: 'text-center align-middle' }
+                                ]
+                            });
+                        } catch(e) {
+                            // Si falla, quitar marca para intentar nuevamente más tarde
+                            $tbl.removeClass('dt-initialized');
+                        }
+                    });
+                }
+
+                // Iniciar tablas al hacer clic en toggles que muestran colecciones
+                document.addEventListener('click', function(ev){
+                    var t = ev.target;
+                    if (t && (t.classList.contains('toggle') || t.closest('.toggle'))){
+                        // Dar tiempo a que se despliegue el contenedor
+                        setTimeout(function(){ initDspaceTables(document); }, 100);
+                    }
+                });
+
+                // Agregar URL+Nombre de bitstream a los detalles de la tarea únicamente en descripción (intro/description)
                 window.addToAssignmentDetails = async function(url, name){
                     try {
-                        // 1) TinyMCE
-                        if (window.tinymce && tinymce.activeEditor) {
-                            const ed = tinymce.activeEditor;
+                        // 1) TinyMCE (buscar el editor asociado a intro/description)
+                        var targetTiny = null;
+                        if (window.tinymce && tinymce.editors && tinymce.editors.length){
+                            for (var i=0;i<tinymce.editors.length;i++){
+                                var ed = tinymce.editors[i];
+                                var el = ed && ed.targetElm;
+                                var id = (el && el.id ? el.id : '').toLowerCase();
+                                var nm = (el && el.name ? el.name : '').toLowerCase();
+                                if (/intro|description/.test(id+' '+nm)) { targetTiny = ed; break; }
+                            }
+                        }
+                        if (targetTiny) {
+                            var ed = targetTiny;
                             let content = ed.getContent({format:'html'}) || '';
                             if (content.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
                             // Asegurar sección "Recursos externos"
@@ -93,10 +165,19 @@ document.addEventListener('DOMContentLoaded', function(){
                             showToast('Recurso agregado a la tarea.', '');
                             return;
                         }
-                        // 2) Atto (div editable)
-                        var atto = document.querySelector('.editor_atto_content');
-                        if (atto) {
-                            var html = atto.innerHTML || '';
+                        // 2) Atto (buscar el wrapper asociado a intro/description)
+                        var attoWrapper = null;
+                        var wrappers = document.querySelectorAll('.editor_atto');
+                        for (var j=0;j<wrappers.length;j++){
+                            var w = wrappers[j];
+                            var ta = w.querySelector('textarea');
+                            var id2 = (ta && ta.id ? ta.id : '').toLowerCase();
+                            var nm2 = (ta && ta.name ? ta.name : '').toLowerCase();
+                            if (/intro|description/.test(id2+' '+nm2)) { attoWrapper = w; break; }
+                        }
+                        if (attoWrapper) {
+                            var atto = attoWrapper.querySelector('.editor_atto_content');
+                            var html = (atto && atto.innerHTML) ? atto.innerHTML : '';
                             if (html.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
                             if (html.indexOf('id="dspace-external-resources"') === -1) {
                                 html += '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
@@ -104,13 +185,9 @@ document.addEventListener('DOMContentLoaded', function(){
                             html = html.replace(/(<div[^>]*id="dspace-external-resources"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
                                 return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
                             });
-                            atto.innerHTML = html;
-                            // Intentar actualizar textarea subyacente si existe
-                            var attoWrapper = atto.closest('.editor_atto');
-                            if (attoWrapper) {
-                                var ta = attoWrapper.querySelector('textarea');
-                                if (ta) { ta.value = atto.innerHTML; }
-                            }
+                            if (atto) { atto.innerHTML = html; }
+                            var ta = attoWrapper.querySelector('textarea');
+                            if (ta) { ta.value = html; }
                             showToast('Recurso agregado a la tarea.', '');
                             return;
                         }
@@ -119,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function(){
                           .filter(function(el){
                               var id = (el.id||'').toLowerCase();
                               var name = (el.name||'').toLowerCase();
-                              return /intro|description|onlinetext/.test(id+" "+name);
+                              return /intro|description/.test(id+" "+name) || /\bintro\b/.test(name);
                           });
                         var target = candidates[0] || document.querySelector('textarea');
                         if (target) {
