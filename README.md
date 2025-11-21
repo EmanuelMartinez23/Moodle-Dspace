@@ -13,7 +13,6 @@ Moodle is designed to allow educators, administrators and learners to create per
 - Read our [User documentation][3]
 - Discover our [developer documentation][5]
 - Take a look at our [demo site][4]
-- Technical report about DSpace viewers (EPUB/SCORM): see docs/REPORTE_VISORES.md
 
 ## Community
 

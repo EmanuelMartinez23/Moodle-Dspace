@@ -72,6 +72,7 @@ class block_dspace_integration extends block_base {
                     // Carga secuencial de scripts DataTables forzando modo no-AMD para evitar
                     // "Mismatched anonymous define()" cuando RequireJS está presente.
                     var _dtLoadingStarted = false;
+                    var _dtBs5Ready = false; // bandera para asegurar integración Bootstrap 5 cargada
                     function loadDTAssets(callback){
                         if (_dtLoadingStarted) { if (callback) callback(); return; }
                         _dtLoadingStarted = true;
@@ -98,12 +99,20 @@ class block_dspace_integration extends block_base {
                         }
 
                         function loadScript(id, src, cb){
-                            if (document.getElementById(id)) { if (cb) cb(); return; }
+                            if (document.getElementById(id)) {
+                                // Si ya existe el nodo, asumimos que fue cargado por otra parte.
+                                if (id === 'dt-bs5-js') { _dtBs5Ready = true; }
+                                if (cb) cb();
+                                return;
+                            }
                             var s = document.createElement('script');
                             s.id = id;
                             s.src = src;
                             s.async = true;
-                            s.onload = function(){ cb && cb(); };
+                            s.onload = function(){
+                                if (id === 'dt-bs5-js') { _dtBs5Ready = true; }
+                                cb && cb();
+                            };
                             s.onerror = function(){ cb && cb(); };
                             (document.head || document.documentElement).appendChild(s);
                         }
@@ -118,6 +127,19 @@ class block_dspace_integration extends block_base {
                         });
                     }
 
+                    function isBootstrapIntegrationPresent($){
+                        try {
+                            if (!$ || !$.fn || !$.fn.dataTable || !$.fn.dataTable.ext) return false;
+                            var r = $.fn.dataTable.ext.renderer;
+                            // DataTables integra distintos renderers; con BS5 suele exponer bootstrap o bootstrap5
+                            if (r && (r.pageButton && (r.pageButton.bootstrap || r.pageButton.bootstrap5))) return true;
+                            // Otra señal: clases dt-bootstrap5 colocadas por la integración
+                            var extclasses = $.fn.dataTable.ext.classes || {};
+                            if (extclasses.sWrapper && /dt-bootstrap5/.test(extclasses.sWrapper)) return true;
+                        } catch(e){}
+                        return false;
+                    }
+
                     function ensureDTLoaded(){
                         // jQuery ya es solicitado por el bloque ($PAGE->requires->jquery()), pero validamos.
                         if (!(window.jQuery && jQuery.fn)) return false;
@@ -129,6 +151,9 @@ class block_dspace_integration extends block_base {
                     function initTablesIfReady(){
                         var $ = window.jQuery || window.$;
                         if (!($ && $.fn && ($.fn.DataTable || $.fn.dataTable))) return false;
+                        // No inicializar hasta que la integración de Bootstrap 5 esté lista para evitar paginación como links simples.
+                        var bsready = _dtBs5Ready || isBootstrapIntegrationPresent($);
+                        if (!bsready) return false;
                         $('.dspace-table').each(function(){
                             var $t = $(this);
                             if ($.fn.dataTable && $.fn.dataTable.isDataTable && $.fn.dataTable.isDataTable(this)) return; // evitar doble init
