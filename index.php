@@ -30,6 +30,11 @@ if (!file_exists('./config.php')) {
 require_once('config.php');
 require_once($CFG->dirroot .'/course/lib.php');
 require_once($CFG->libdir .'/filelib.php');
+// DSpace client (opcional). Solo si el bloque está instalado.
+$dspaceclientpath = $CFG->dirroot . '/blocks/dspace_integration/dspace_client.php';
+if (file_exists($dspaceclientpath)) {
+    require_once($dspaceclientpath);
+}
 
 redirect_if_major_upgrade_required();
 
@@ -135,6 +140,105 @@ if (!empty($CFG->customfrontpageinclude)) {
 include_course_ajax($SITE, $modnamesused);
 
 echo $courserenderer->frontpage();
+
+// Bloque: Formulario de subida a DSpace en la página de inicio (debajo de "Cursos disponibles").
+// Se muestra en una card colapsable con estilos Bootstrap/Moodle.
+try {
+    if (class_exists('dspace_client')) {
+        $server = get_config('block_dspace_integration', 'server');
+        $email = get_config('block_dspace_integration', 'email');
+        $password = get_config('block_dspace_integration', 'password');
+
+        if (!empty($server) && !empty($email) && !empty($password)) {
+            $client = new dspace_client($server, $email, $password);
+            $communities = $client->get_communities();
+
+            if (!empty($communities)) {
+                // Render de card colapsable.
+                $cardid = 'frontpage-dspace-upload';
+                echo html_writer::start_div('container my-4');
+                echo html_writer::start_div('card');
+                // Header con botón de colapso.
+                echo html_writer::start_div('card-header d-flex justify-content-between align-items-center');
+                echo html_writer::span('Repositorio Institucional — Subir archivos a DSpace');
+                $btnattrs = [
+                    'class' => 'btn btn-link',
+                    'type' => 'button',
+                    'data-toggle' => 'collapse',
+                    'data-target' => '#' . $cardid,
+                    'data-bs-toggle' => 'collapse',
+                    'data-bs-target' => '#' . $cardid,
+                    'aria-expanded' => 'false',
+                    'aria-controls' => $cardid
+                ];
+                echo html_writer::tag('button', 'Mostrar / Ocultar', $btnattrs);
+                echo html_writer::end_div(); // card-header
+
+                // Cuerpo colapsable con el formulario.
+                echo html_writer::start_tag('div', ['id' => $cardid, 'class' => 'collapse']);
+                echo html_writer::start_div('card-body');
+
+                // Construir formulario manualmente (action al manejador del bloque).
+                $action = new moodle_url('/blocks/dspace_integration/upload.php');
+                echo html_writer::start_tag('form', ['id' => 'frontpage-dspace-upload-form', 'action' => $action->out(false), 'method' => 'post', 'enctype' => 'multipart/form-data']);
+
+                // Selector de colección.
+                echo html_writer::start_div('form-group');
+                echo html_writer::tag('label', 'Seleccione la colección', ['for' => 'collection_id']);
+                echo html_writer::start_tag('select', ['name' => 'collection_id', 'id' => 'collection_id', 'class' => 'custom-select form-control', 'required' => 'required']);
+                foreach ($communities as $community) {
+                    $colopts = [];
+                    try {
+                        $collections = $client->get_collections($community['uuid']);
+                    } catch (Exception $e) {
+                        $collections = [];
+                    }
+                    if (!empty($collections)) {
+                        // Agrupar por comunidad usando <optgroup>.
+                        $label = format_string($community['name']);
+                        echo html_writer::start_tag('optgroup', ['label' => $label]);
+                        foreach ($collections as $col) {
+                            $uuid = s($col['uuid']);
+                            $name = format_string($col['name']);
+                            echo html_writer::tag('option', $name, ['value' => $uuid]);
+                        }
+                        echo html_writer::end_tag('optgroup');
+                    }
+                }
+                echo html_writer::end_tag('select');
+                echo html_writer::end_div();
+
+                // Título del item.
+                echo html_writer::start_div('form-group mt-3');
+                echo html_writer::tag('label', 'Título del item', ['for' => 'title']);
+                echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'title', 'id' => 'title', 'class' => 'form-control', 'required' => 'required']);
+                echo html_writer::end_div();
+
+                // Archivos.
+                echo html_writer::start_div('form-group mt-3');
+                echo html_writer::tag('label', 'Seleccione uno o varios archivos', ['for' => 'files']);
+                echo html_writer::empty_tag('input', ['type' => 'file', 'name' => 'files[]', 'id' => 'files', 'class' => 'form-control-file form-control', 'multiple' => 'multiple', 'required' => 'required']);
+                echo html_writer::end_div();
+
+                // Submit.
+                echo html_writer::tag('button', 'Subir a DSpace', ['type' => 'submit', 'class' => 'btn btn-primary mt-2']);
+
+                echo html_writer::end_tag('form');
+                echo html_writer::end_div(); // card-body
+                echo html_writer::end_tag('div'); // collapse
+                echo html_writer::end_div(); // card
+                echo html_writer::end_div(); // container
+            } else {
+                // Si no hay comunidades configuradas, no mostramos el formulario.
+            }
+        } else {
+            // Configuración ausente: no renderizar el formulario.
+        }
+    }
+} catch (Exception $e) {
+    // Ante cualquier error, evitamos romper la portada y no mostramos el formulario.
+    debugging('Error al renderizar formulario DSpace en inicio: ' . $e->getMessage(), DEBUG_DEVELOPER);
+}
 
 if ($editing && has_capability('moodle/course:create', context_system::instance())) {
     echo $courserenderer->add_new_course_button();
