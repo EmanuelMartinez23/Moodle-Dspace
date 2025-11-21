@@ -19,6 +19,7 @@
 # Temporary files including undo
 *~
 #
+/docs/REPORTE_VISORES.md
 /config.php
 /tags
 /TAGS
