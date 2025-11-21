@@ -1,69 +1,3 @@
-<?php
-class block_dspace_integration extends block_base {
-
-    public function init() {
-        $this->title = get_string('pluginname', 'block_dspace_integration');
-    }
-
-    public function has_config() {
-        return true;
-    }
-
-    public function get_content() {
-        global $PAGE;
-
-        if ($this->content !== null) {
-            return $this->content;
-        }
-
-        $this->content = new stdClass();
-
-        $PAGE->requires->jquery();
-        // $PAGE->requires->css(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/css/dataTables.bootstrap5.min.css'));
-        // $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net@1.13.1/js/jquery.dataTables.min.js'), true);
-        // $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/js/dataTables.bootstrap5.min.js'), true);
-
-        // Estilos mínimos para evitar desbordes en tabla y buscador (inyectados inline para compatibilidad)
-        $customcss = "
-            .block_dspace_integration .dspace-table-wrap { width: 100%; overflow-x: auto; }
-            .block_dspace_integration .dataTables_wrapper { width: 100%; overflow-x: auto; }
-            /* Permitimos el wrap natural; el scroll aparece si el contenido supera el ancho */
-            .block_dspace_integration table.dspace-table { table-layout: auto; }
-            .block_dspace_integration table.dspace-table th, .block_dspace_integration table.dspace-table td { white-space: normal; vertical-align: middle; }
-            .block_dspace_integration .dataTables_filter { float: right; }
-            /* Alineación solicitada: Item y Bitstreams a la izquierda y centrado vertical */
-            .block_dspace_integration .dspace-col-item,
-            .block_dspace_integration .dspace-col-bitstreams { text-align: left; vertical-align: middle; }
-            /* Previsualizar al centro (visual) */
-            .block_dspace_integration .dspace-col-preview,
-            .block_dspace_integration .dspace-col-add { text-align: center; vertical-align: middle; }
-            .block_dspace_integration .dspace-bit-row { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0; }
-            .block_dspace_integration .dspace-bit-row input[type=checkbox] { margin: 0; }
-            .block_dspace_integration .dspace-bit-badge { display: inline-flex; align-items: center; justify-content: flex-start; padding: 6px 8px; }
-            .block_dspace_integration .dspace-preview-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
-        ";
-
-        $customjs = <<<'JS'
-            $(document).ready(function() {
-                if ($.fn && $.fn.DataTable) {
-                  $('.dspace-table').DataTable({
-                    pageLength: 5,
-                    lengthMenu: [ [5, 10, 15, 25, 50], [5, 10, 15, 25, 50] ],
-                    lengthChange: true,
-                    searching: true,
-                    ordering: true,
-                    autoWidth: false,
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.13.1/i18n/es-ES.json'
-                    },
-                    columnDefs: [
-                        { width: '220px', targets: 0 },
-                        { width: '360px', targets: 1 },
-                        { width: '260px', targets: 2 },
-                        { width: '160px', targets: 3 }
-                    ]
-                  });
-                }
 
                 // Funciones auxiliares de previsualización
                 window.openPreviewWindow = function(url) {
@@ -76,29 +10,45 @@ class block_dspace_integration extends block_base {
                     window.open(url, '_blank', 'noopener');
                 };
 
-                // Agregar URL de bitstream a los detalles de la tarea (intro/descripcion)
-                window.addToAssignmentDetails = async function(url){
+                // Agregar URL+Nombre de bitstream a los detalles de la tarea (intro/descripcion)
+                window.addToAssignmentDetails = async function(url, name){
                     try {
                         // 1) TinyMCE
                         if (window.tinymce && tinymce.activeEditor) {
                             const ed = tinymce.activeEditor;
                             let content = ed.getContent({format:'html'}) || '';
-                            if (content.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
-                            ed.insertContent('<p><a href="'+url+'" target="_blank" rel="noopener">'+url+'</a></p>');
+                            if (content.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
+                            // Asegurar sección "Recursos externos"
+                            if (content.indexOf('id=\"dspace-external-resources\"') === -1) {
+                                content += '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
+                            }
+                            // Insertar <li>
+                            content = content.replace(/(<div[^>]*id=\\\"dspace-external-resources\\\"[^>]*>.*?<ul[^>]*>)([\\s\\S]*?)(<\\/ul>)/, function(m, a, b, c){
+                                return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
+                            });
+                            ed.setContent(content);
+                            showToast('Recurso agregado a la tarea.', '');
                             return;
                         }
                         // 2) Atto (div editable)
                         var atto = document.querySelector('.editor_atto_content');
                         if (atto) {
                             var html = atto.innerHTML || '';
-                            if (html.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
-                            atto.innerHTML = html + '<p><a href="'+url+'" target="_blank" rel="noopener">'+url+'</a></p>';
+                            if (html.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
+                            if (html.indexOf('id="dspace-external-resources"') === -1) {
+                                html += '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
+                            }
+                            html = html.replace(/(<div[^>]*id=\"dspace-external-resources\"[^>]*>.*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
+                                return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
+                            });
+                            atto.innerHTML = html;
                             // Intentar actualizar textarea subyacente si existe
                             var attoWrapper = atto.closest('.editor_atto');
                             if (attoWrapper) {
                                 var ta = attoWrapper.querySelector('textarea');
                                 if (ta) { ta.value = atto.innerHTML; }
                             }
+                            showToast('Recurso agregado a la tarea.', '');
                             return;
                         }
                         // 3) Textareas comunes
@@ -111,15 +61,22 @@ class block_dspace_integration extends block_base {
                         var target = candidates[0] || document.querySelector('textarea');
                         if (target) {
                             var val = target.value || '';
-                            if (val.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
-                            target.value = (val ? (val+"\n") : '') + url;
+                            if (val.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
+                            var blockStart = '\n\nRecursos externos:\n';
+                            var line = '- ' + (name||'Recurso') + ' — ' + url + '\n';
+                            if (val.indexOf('Recursos externos:') === -1) {
+                                target.value = (val ? (val+blockStart) : ('Recursos externos:\n')) + line;
+                            } else {
+                                target.value = val + line;
+                            }
+                            showToast('Recurso agregado a la tarea.', '');
                             return;
                         }
                         // 4) Fallback: copiar al portapapeles
                         await navigator.clipboard.writeText(url);
-                        alert('No se encontró el editor de la tarea. La URL se copió al portapapeles, pégala en los detalles.');
+                        showToast('No se encontró el editor. Copiamos la URL al portapapeles.', 'error');
                     } catch(e){
-                        alert('No fue posible agregar automáticamente. Copiamos la URL al portapapeles.');
+                        showToast('No fue posible agregar automáticamente. Copiamos la URL al portapapeles.', 'error');
                         try { await navigator.clipboard.writeText(url); } catch(_){}
                     }
                 };
@@ -259,7 +216,8 @@ class block_dspace_integration extends block_base {
 
                                             // Botón para agregar URL del bitstream a los detalles de la tarea
                                             $safeAddUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
-                                            $addHtml .= "<div class='dspace-bit-row'><button type='button' class='btn btn-sm btn-success' onclick=\"addToAssignmentDetails('{$safeAddUrl}')\">Agregar</button></div>";
+                                            $safeNameJs = htmlspecialchars($bitName, ENT_QUOTES, 'UTF-8');
+                                            $addHtml .= "<div class='dspace-bit-row'><button type='button' class='btn btn-sm btn-success' onclick=\"addToAssignmentDetails('{$safeAddUrl}', '{$safeNameJs}')\">Agregar</button></div>";
                                         }
                                     }
                                 }
