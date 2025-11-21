@@ -146,11 +146,13 @@ class block_dspace_integration extends block_base {
                             return /(\b|_)intro(editor)?(\b|$)/.test(id) || /(\b|_)intro(editor)?(\b|$)/.test(nm);
                         }
 
-                        // 1) TinyMCE: localizar editor de intro/introeditor, guardar y disparar change
+                        // 1 y 2) Espera unificada hasta ~3s intentando TinyMCE y Atto antes de caer a textarea
                         var attempt = 0;
-                        var maxAttempts = 8; // ~8 * 200ms = 1.6s
-                        if (window.tinymce) {
-                            while (attempt < maxAttempts) {
+                        var maxAttempts = 15; // ~15 * 200ms = 3s
+                        var foundAndInserted = false;
+                        while (attempt < maxAttempts && !foundAndInserted) {
+                            // TinyMCE
+                            if (window.tinymce) {
                                 var targetEditor = null;
                                 if (tinymce.editors && tinymce.editors.length) {
                                     for (var i=0;i<tinymce.editors.length;i++){
@@ -178,32 +180,33 @@ class block_dspace_integration extends block_base {
                                     showToast('Recurso agregado a la descripción de la tarea.', '');
                                     return;
                                 }
-                                // Si TinyMCE existe pero aún no hallamos el editor correcto, esperar y reintentar
-                                attempt++;
-                                await new Promise(function(r){ setTimeout(r, 200); });
                             }
+
+                            // Atto
+                            var introTextareaProbe = Array.from(document.querySelectorAll('textarea')).find(function(el){ return matchesIntroIdName(el); });
+                            var attoWrapper = introTextareaProbe ? introTextareaProbe.closest('.editor_atto') : null;
+                            var atto = attoWrapper ? attoWrapper.querySelector('.editor_atto_content') : null;
+                            if (atto) {
+                                var html = atto.innerHTML || '';
+                                var res2 = injectListHTML(html);
+                                if (res2.dup) { showToast('Este recurso ya está agregado.', ''); return; }
+                                atto.innerHTML = res2.html;
+                                var ta2 = attoWrapper.querySelector('textarea');
+                                if (ta2) {
+                                    ta2.value = atto.innerHTML;
+                                    try { ta2.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
+                                    try { ta2.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+                                }
+                                showToast('Recurso agregado a la descripción de la tarea.', '');
+                                return;
+                            }
+
+                            attempt++;
+                            await new Promise(function(r){ setTimeout(r, 200); });
                         }
 
-                        // 2) Atto: localizar wrapper de intro
+                        // 3) Fallback: textarea intro/introeditor en texto plano (sin HTML crudo) tras agotar la espera
                         var introTextarea = Array.from(document.querySelectorAll('textarea')).find(function(el){ return matchesIntroIdName(el); });
-                        var attoWrapper = introTextarea ? introTextarea.closest('.editor_atto') : null;
-                        var atto = attoWrapper ? attoWrapper.querySelector('.editor_atto_content') : null;
-                        if (atto) {
-                            var html = atto.innerHTML || '';
-                            var res2 = injectListHTML(html);
-                            if (res2.dup) { showToast('Este recurso ya está agregado.', ''); return; }
-                            atto.innerHTML = res2.html;
-                            var ta2 = attoWrapper.querySelector('textarea');
-                            if (ta2) {
-                                ta2.value = atto.innerHTML;
-                                try { ta2.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
-                                try { ta2.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
-                            }
-                            showToast('Recurso agregado a la descripción de la tarea.', '');
-                            return;
-                        }
-
-                        // 3) Fallback: textarea intro/introeditor en texto plano (sin HTML crudo)
                         if (introTextarea) {
                             var val = introTextarea.value || '';
                             var res3 = injectListText(val);
@@ -225,7 +228,7 @@ class block_dspace_integration extends block_base {
                 };
 
                 // Delegación para botones Agregar: usan data-url y data-name
-                document.addEventListener('click', function(ev){
+                document.addEventListener('click', async function(ev){
                     var btn = ev.target && ev.target.closest('.btn-dspace-add');
                     if (!btn) return;
                     // Evitar que cualquier comportamiento por defecto o burbujeo afecte el primer clic
@@ -233,7 +236,22 @@ class block_dspace_integration extends block_base {
                     try { ev.stopPropagation(); } catch(_){}
                     var url = btn.getAttribute('data-url') || '';
                     var name = btn.getAttribute('data-name') || '';
-                    if (url) { window.addToAssignmentDetails(url, name); }
+                    if (!url) return;
+                    // Deshabilitar botón mientras se procesa para evitar dobles clics
+                    var prevDisabled = btn.disabled;
+                    var prevAriaBusy = btn.getAttribute('aria-busy');
+                    var prevText = btn.innerHTML;
+                    try {
+                        btn.disabled = true;
+                        btn.setAttribute('aria-busy', 'true');
+                        // Opcional: feedback visual mínimo
+                        btn.innerHTML = 'Agregando…';
+                        await window.addToAssignmentDetails(url, name);
+                    } finally {
+                        btn.disabled = prevDisabled;
+                        if (prevAriaBusy == null) { btn.removeAttribute('aria-busy'); } else { btn.setAttribute('aria-busy', prevAriaBusy); }
+                        btn.innerHTML = prevText;
+                    }
                 });
             });
         JS;
