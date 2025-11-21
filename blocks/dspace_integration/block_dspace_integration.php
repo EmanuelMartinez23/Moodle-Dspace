@@ -365,7 +365,7 @@ class block_dspace_integration extends block_base {
                                             $downloadUrl = "http://192.168.1.27:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
                                             // Checkbox + texto por fila, alineado al inicio
-                                            $bitstreamHtml .= "<div class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div>";
+                                            $bitstreamHtml .= "<div class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div><br>";
 
                                             // Construcción de enlaces de previsualización por tipo
                                             $ext = strtolower(pathinfo($bitstream['name'] ?? '', PATHINFO_EXTENSION));
