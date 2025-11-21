@@ -115,10 +115,11 @@ class block_dspace_integration extends block_base {
                         function injectList(html){
                             if ((html||'').indexOf(url) !== -1) { return {html: html, added: false, dup: true}; }
                             if ((html||'').indexOf('id="dspace-external-resources"') === -1) {
-                                html = (html||'') + '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
+                                // Crear contenedor con lista sin viñetas; los elementos mostrarán un prefijo "+ " antes del enlace
+                                html = (html||'') + '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul style="list-style:none;padding-left:0;margin-left:0;"></ul></div>';
                             }
-                            html = html.replace(/(<div[^>]*id="dspace-external-resources"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
-                                return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
+                            html = html.replace(/(<div[^>]*id=\"dspace-external-resources\"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
+                                return a + b + '<li style="margin:4px 0;">+ <a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
                             });
                             return {html: html, added: true, dup: false};
                         }
@@ -182,14 +183,9 @@ class block_dspace_integration extends block_base {
                         // 3) Fallback: textarea intro/introeditor en texto plano
                         if (introTextarea) {
                             var val = introTextarea.value || '';
-                            if (val.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
-                            var blockStart = '\n\nRecursos externos:\n';
-                            var line = '- ' + (name||'Recurso') + ' — ' + url + '\n';
-                            if (val.indexOf('Recursos externos:') === -1) {
-                                introTextarea.value = (val ? (val+blockStart) : ('Recursos externos:\n')) + line;
-                            } else {
-                                introTextarea.value = val + line;
-                            }
+                            var res3 = injectList(val);
+                            if (res3.dup) { showToast('Este recurso ya está agregado.', ''); return; }
+                            introTextarea.value = res3.html;
                             try { introTextarea.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
                             try { introTextarea.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
                             showToast('Recurso agregado a la descripción de la tarea.', '');
