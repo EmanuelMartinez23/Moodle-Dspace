@@ -69,14 +69,60 @@ class block_dspace_integration extends block_base {
                         (document.head || document.documentElement).appendChild(el);
                     }
 
+                    // Carga secuencial de scripts DataTables forzando modo no-AMD para evitar
+                    // "Mismatched anonymous define()" cuando RequireJS está presente.
+                    var _dtLoadingStarted = false;
+                    function loadDTAssets(callback){
+                        if (_dtLoadingStarted) { if (callback) callback(); return; }
+                        _dtLoadingStarted = true;
+                        // Inyectar CSS siempre
+                        injectOnce('link', {id: 'dt-bs5-css', rel: 'stylesheet', href: CDN.css});
+
+                        var savedDefine = window.define;
+                        var savedModule = window.module;
+                        var hadDefine = Object.prototype.hasOwnProperty.call(window, 'define');
+                        var hadModule = Object.prototype.hasOwnProperty.call(window, 'module');
+
+                        function suppressAMD(){
+                            try {
+                                // Evitar que los UMD detecten AMD (RequireJS) durante la ejecución del script
+                                window.define = undefined;
+                                window.module = undefined;
+                            } catch(e){}
+                        }
+                        function restoreAMD(){
+                            try {
+                                if (hadDefine) { window.define = savedDefine; } else { delete window.define; }
+                                if (hadModule) { window.module = savedModule; } else { delete window.module; }
+                            } catch(e){}
+                        }
+
+                        function loadScript(id, src, cb){
+                            if (document.getElementById(id)) { if (cb) cb(); return; }
+                            var s = document.createElement('script');
+                            s.id = id;
+                            s.src = src;
+                            s.async = true;
+                            s.onload = function(){ cb && cb(); };
+                            s.onerror = function(){ cb && cb(); };
+                            (document.head || document.documentElement).appendChild(s);
+                        }
+
+                        // Secuencia: suprimir AMD -> cargar núcleo -> cargar bs5 -> restaurar AMD
+                        suppressAMD();
+                        loadScript('dt-core-js', CDN.jsjq, function(){
+                            loadScript('dt-bs5-js', CDN.jsbs, function(){
+                                restoreAMD();
+                                if (callback) callback();
+                            });
+                        });
+                    }
+
                     function ensureDTLoaded(){
                         // jQuery ya es solicitado por el bloque ($PAGE->requires->jquery()), pero validamos.
                         if (!(window.jQuery && jQuery.fn)) return false;
-                        // CSS
-                        injectOnce('link', {id: 'dt-bs5-css', rel: 'stylesheet', href: CDN.css});
-                        // Núcleo y Bootstrap 5
-                        injectOnce('script', {id: 'dt-core-js', src: CDN.jsjq});
-                        injectOnce('script', {id: 'dt-bs5-js', src: CDN.jsbs});
+                        // Asegurar assets cargándose; el retorno final depende de la disponibilidad del plugin
+                        loadDTAssets();
                         return !!(jQuery.fn && (jQuery.fn.DataTable || jQuery.fn.dataTable));
                     }
 

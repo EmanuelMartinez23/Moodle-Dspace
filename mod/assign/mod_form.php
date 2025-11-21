@@ -59,11 +59,9 @@ class mod_assign_mod_form extends moodleform_mod {
         }
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
-        $mform->addElement('html', '
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/css/dataTables.bootstrap5.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.1/js/jquery.dataTables.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/js/dataTables.bootstrap5.min.js"></script>
-        ');
+        // DataTables ahora es cargado y gestionado exclusivamente por el bloque
+        // dspace_integration para evitar conflictos con RequireJS (AMD) y
+        // el error "Mismatched anonymous define()". No incluir assets aquí.
 
 
         $this->standard_intro_elements(get_string('description', 'assign'));
