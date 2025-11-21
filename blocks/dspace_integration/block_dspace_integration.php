@@ -67,62 +67,152 @@ class block_dspace_integration extends block_base {
 
                 // Funciones auxiliares de previsualización
                 window.openPreviewWindow = function(url) {
-                    // Abre en una nueva ventana/pestaña para evitar problemas de sandboxing en iframes
                     window.open(url, '_blank', 'noopener');
                 };
                 window.previewScormNotice = function(url){
-                    // Mensaje informativo mínimo si no es posible previsualizar directamente
                     alert('Para previsualizar un paquete SCORM es necesario que el paquete esté desplegado en un servidor web. Intentaremos abrir el archivo, pero si no se muestra, contacte con el administrador.');
                     window.open(url, '_blank', 'noopener');
                 };
 
-                // Agregar URL de bitstream a los detalles de la tarea (intro/descripcion)
-                window.addToAssignmentDetails = async function(url){
-                    try {
-                        // 1) TinyMCE
-                        if (window.tinymce && tinymce.activeEditor) {
-                            const ed = tinymce.activeEditor;
-                            let content = ed.getContent({format:'html'}) || '';
-                            if (content.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
-                            ed.insertContent('<p><a href="'+url+'" target="_blank" rel="noopener">'+url+'</a></p>');
-                            return;
+                // Toast mínimo
+                if (typeof window.showToast !== 'function') {
+                    window.showToast = function(msg, type){
+                        try {
+                            var c = document.getElementById('dspace-toast-container');
+                            if (!c) {
+                                c = document.createElement('div');
+                                c.id = 'dspace-toast-container';
+                                c.style.position = 'fixed';
+                                c.style.zIndex = '99999';
+                                c.style.top = '16px';
+                                c.style.right = '16px';
+                                c.style.display = 'flex';
+                                c.style.flexDirection = 'column';
+                                c.style.gap = '8px';
+                                document.body.appendChild(c);
+                            }
+                            var t = document.createElement('div');
+                            t.textContent = msg || '';
+                            t.style.padding = '10px 12px';
+                            t.style.borderRadius = '6px';
+                            t.style.color = '#fff';
+                            t.style.fontSize = '14px';
+                            t.style.boxShadow = '0 2px 8px rgba(0,0,0,.2)';
+                            t.style.background = (type === 'error') ? '#d9534f' : '#28a745';
+                            c.appendChild(t);
+                            setTimeout(function(){ try { c.removeChild(t); } catch(e){} }, 2500);
+                        } catch(e) {
+                            if (type === 'error') { console.error(msg); } else { console.log(msg); }
                         }
-                        // 2) Atto (div editable)
-                        var atto = document.querySelector('.editor_atto_content');
+                    };
+                }
+
+                // Agregar URL+Nombre de bitstream SIEMPRE a la descripción de la tarea (intro)
+                window.addToAssignmentDetails = async function(url, name){
+                    try {
+                        if (!url) { showToast('URL inválida.', 'error'); return; }
+
+                        function injectList(html){
+                            if ((html||'').indexOf(url) !== -1) { return {html: html, added: false, dup: true}; }
+                            if ((html||'').indexOf('id="dspace-external-resources"') === -1) {
+                                html = (html||'') + '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul></ul></div>';
+                            }
+                            html = html.replace(/(<div[^>]*id="dspace-external-resources"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
+                                return a + b + '<li><a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
+                            });
+                            return {html: html, added: true, dup: false};
+                        }
+
+                        function matchesIntroIdName(el){
+                            var id = (el && el.id || '').toLowerCase();
+                            var nm = (el && el.name || '').toLowerCase();
+                            return /(\b|_)intro(editor)?(\b|$)/.test(id) || /(\b|_)intro(editor)?(\b|$)/.test(nm);
+                        }
+
+                        // 1) TinyMCE: localizar editor de intro/introeditor, guardar y disparar change
+                        if (window.tinymce) {
+                            var targetEditor = null;
+                            if (tinymce.editors && tinymce.editors.length) {
+                                for (var i=0;i<tinymce.editors.length;i++){
+                                    var ed = tinymce.editors[i];
+                                    if (!ed) continue;
+                                    var t = ed.targetElm;
+                                    if (t && matchesIntroIdName(t)) { targetEditor = ed; break; }
+                                }
+                            }
+                            if (!targetEditor && tinymce.activeEditor && tinymce.activeEditor.targetElm && matchesIntroIdName(tinymce.activeEditor.targetElm)) {
+                                targetEditor = tinymce.activeEditor;
+                            }
+                            if (targetEditor) {
+                                var content = targetEditor.getContent({format:'html'}) || '';
+                                var res = injectList(content);
+                                if (res.dup) { showToast('Este recurso ya está agregado.', ''); return; }
+                                try { targetEditor.focus(); } catch(_){ }
+                                targetEditor.setContent(res.html);
+                                if (typeof targetEditor.save === 'function') { try { targetEditor.save(); } catch(_){ } }
+                                var ta = targetEditor.targetElm;
+                                if (ta) {
+                                    try { ta.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
+                                    try { ta.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+                                }
+                                showToast('Recurso agregado a la descripción de la tarea.', '');
+                                return;
+                            }
+                        }
+
+                        // 2) Atto: localizar wrapper de intro
+                        var introTextarea = Array.from(document.querySelectorAll('textarea')).find(function(el){ return matchesIntroIdName(el); });
+                        var attoWrapper = introTextarea ? introTextarea.closest('.editor_atto') : null;
+                        var atto = attoWrapper ? attoWrapper.querySelector('.editor_atto_content') : null;
                         if (atto) {
                             var html = atto.innerHTML || '';
-                            if (html.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
-                            atto.innerHTML = html + '<p><a href="'+url+'" target="_blank" rel="noopener">'+url+'</a></p>';
-                            // Intentar actualizar textarea subyacente si existe
-                            var attoWrapper = atto.closest('.editor_atto');
-                            if (attoWrapper) {
-                                var ta = attoWrapper.querySelector('textarea');
-                                if (ta) { ta.value = atto.innerHTML; }
+                            var res2 = injectList(html);
+                            if (res2.dup) { showToast('Este recurso ya está agregado.', ''); return; }
+                            atto.innerHTML = res2.html;
+                            var ta2 = attoWrapper.querySelector('textarea');
+                            if (ta2) {
+                                ta2.value = atto.innerHTML;
+                                try { ta2.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
+                                try { ta2.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
                             }
+                            showToast('Recurso agregado a la descripción de la tarea.', '');
                             return;
                         }
-                        // 3) Textareas comunes
-                        var candidates = Array.from(document.querySelectorAll('textarea'))
-                          .filter(function(el){
-                              var id = (el.id||'').toLowerCase();
-                              var name = (el.name||'').toLowerCase();
-                              return /intro|description|onlinetext/.test(id+" "+name);
-                          });
-                        var target = candidates[0] || document.querySelector('textarea');
-                        if (target) {
-                            var val = target.value || '';
-                            if (val.indexOf(url) !== -1) { alert('Este recurso ya está agregado en los detalles.'); return; }
-                            target.value = (val ? (val+"\n") : '') + url;
+
+                        // 3) Fallback: textarea intro/introeditor en texto plano
+                        if (introTextarea) {
+                            var val = introTextarea.value || '';
+                            if (val.indexOf(url) !== -1) { showToast('Este recurso ya está agregado.', ''); return; }
+                            var blockStart = '\n\nRecursos externos:\n';
+                            var line = '- ' + (name||'Recurso') + ' — ' + url + '\n';
+                            if (val.indexOf('Recursos externos:') === -1) {
+                                introTextarea.value = (val ? (val+blockStart) : ('Recursos externos:\n')) + line;
+                            } else {
+                                introTextarea.value = val + line;
+                            }
+                            try { introTextarea.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
+                            try { introTextarea.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+                            showToast('Recurso agregado a la descripción de la tarea.', '');
                             return;
                         }
+
                         // 4) Fallback: copiar al portapapeles
                         await navigator.clipboard.writeText(url);
-                        alert('No se encontró el editor de la tarea. La URL se copió al portapapeles, pégala en los detalles.');
+                        showToast('No se encontró la descripción de la tarea. Copiamos la URL al portapapeles.', 'error');
                     } catch(e){
-                        alert('No fue posible agregar automáticamente. Copiamos la URL al portapapeles.');
+                        showToast('No fue posible agregar automáticamente. Copiamos la URL al portapapeles.', 'error');
                         try { await navigator.clipboard.writeText(url); } catch(_){}
                     }
                 };
+
+                // Delegación para botones Agregar: usan data-url y data-name
+                document.addEventListener('click', function(ev){
+                    var btn = ev.target && ev.target.closest('.btn-dspace-add');
+                    if (!btn) return;
+                    var url = btn.getAttribute('data-url') || '';
+                    var name = btn.getAttribute('data-name') || '';
+                    if (url) { window.addToAssignmentDetails(url, name); }
+                });
             });
         JS;
         $PAGE->requires->js_init_code($customjs);
@@ -257,9 +347,10 @@ class block_dspace_integration extends block_base {
                                                 $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span><br>";
                                             }
 
-                                            // Botón para agregar URL del bitstream a los detalles de la tarea
+                                            // Botón para agregar URL del bitstream a los detalles de la tarea (delegación + data-attrs)
                                             $safeAddUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
-                                            $addHtml .= "<div class='dspace-bit-row'><button type='button' class='btn btn-sm btn-success' onclick=\"addToAssignmentDetails('{$safeAddUrl}')\">Agregar</button></div>";
+                                            $safeNameJs = htmlspecialchars($bitName, ENT_QUOTES, 'UTF-8');
+                                            $addHtml .= "<div class='dspace-bit-row'><button type='button' class='btn btn-sm btn-success btn-dspace-add' data-url='{$safeAddUrl}' data-name='{$safeNameJs}'>Agregar</button></div>";
                                         }
                                     }
                                 }
