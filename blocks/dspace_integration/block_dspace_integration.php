@@ -112,16 +112,31 @@ class block_dspace_integration extends block_base {
                     try {
                         if (!url) { showToast('URL inválida.', 'error'); return; }
 
-                        function injectList(html){
+                        // Inserta en modo HTML (TinyMCE/Atto)
+                        function injectListHTML(html){
                             if ((html||'').indexOf(url) !== -1) { return {html: html, added: false, dup: true}; }
                             if ((html||'').indexOf('id="dspace-external-resources"') === -1) {
-                                // Crear contenedor con lista sin viñetas; los elementos mostrarán un prefijo "+ " antes del enlace
                                 html = (html||'') + '\n<div id="dspace-external-resources"><h3>Recursos externos</h3><ul style="list-style:none;padding-left:0;margin-left:0;"></ul></div>';
                             }
                             html = html.replace(/(<div[^>]*id=\"dspace-external-resources\"[^>]*>[\s\S]*?<ul[^>]*>)([\s\S]*?)(<\/ul>)/, function(m, a, b, c){
                                 return a + b + '<li style="margin:4px 0;">+ <a href="'+url+'" target="_blank" rel="noopener">'+(name||url)+'</a></li>' + c;
                             });
                             return {html: html, added: true, dup: false};
+                        }
+
+                        // Inserta en modo texto plano (textarea sin editor), evitando HTML "en seco" en la edición
+                        function injectListText(text){
+                            var current = String(text||'');
+                            if (current.indexOf(url) !== -1) { return {text: current, added: false, dup: true}; }
+                            var header = 'Recursos externos';
+                            var block = '';
+                            if (current.indexOf(header) === -1) {
+                                // Crear una nueva sección al final
+                                block = (current.trim().length ? '\n\n' : '') + header + '\n\n';
+                            }
+                            // Agregar ítem en formato legible sin HTML
+                            block += '+ ' + (name || url) + ' - ' + url + '\n';
+                            return {text: current + block, added: true, dup: false};
                         }
 
                         function matchesIntroIdName(el){
@@ -146,7 +161,7 @@ class block_dspace_integration extends block_base {
                             }
                             if (targetEditor) {
                                 var content = targetEditor.getContent({format:'html'}) || '';
-                                var res = injectList(content);
+                                var res = injectListHTML(content);
                                 if (res.dup) { showToast('Este recurso ya está agregado.', ''); return; }
                                 try { targetEditor.focus(); } catch(_){ }
                                 targetEditor.setContent(res.html);
@@ -167,7 +182,7 @@ class block_dspace_integration extends block_base {
                         var atto = attoWrapper ? attoWrapper.querySelector('.editor_atto_content') : null;
                         if (atto) {
                             var html = atto.innerHTML || '';
-                            var res2 = injectList(html);
+                            var res2 = injectListHTML(html);
                             if (res2.dup) { showToast('Este recurso ya está agregado.', ''); return; }
                             atto.innerHTML = res2.html;
                             var ta2 = attoWrapper.querySelector('textarea');
@@ -180,12 +195,12 @@ class block_dspace_integration extends block_base {
                             return;
                         }
 
-                        // 3) Fallback: textarea intro/introeditor en texto plano
+                        // 3) Fallback: textarea intro/introeditor en texto plano (sin HTML crudo)
                         if (introTextarea) {
                             var val = introTextarea.value || '';
-                            var res3 = injectList(val);
+                            var res3 = injectListText(val);
                             if (res3.dup) { showToast('Este recurso ya está agregado.', ''); return; }
-                            introTextarea.value = res3.html;
+                            introTextarea.value = res3.text;
                             try { introTextarea.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
                             try { introTextarea.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
                             showToast('Recurso agregado a la descripción de la tarea.', '');
