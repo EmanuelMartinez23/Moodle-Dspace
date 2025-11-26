@@ -473,17 +473,23 @@ class block_dspace_integration extends block_base {
                         $this->content->text .= "<div class='nested' style='display:none; margin-top:15px; '>";
                         if (!empty($collectionItems)) {
                             $this->content->text .= "
-                                <div class='dspace-table-wrap'>
-                                <table class='table table-striped table-bordered dspace-table display' style='width:100%;'>
-                                    <thead>
-                                        <tr>
-                                            <th class='dspace-col-item' style='width:220px; word-wrap:break-word;'>Item</th>
-                                            <th class='dspace-col-bitstreams' style='width:360px; word-wrap:break-word;'>Bitstreams</th>
-                                            <th class='dspace-col-preview' style='width:260px; word-wrap:break-word;'>Previsualizar</th>
-<th class='dspace-col-add' style='width:260px; word-wrap:break-word;'>Agregar como URL<br><small style='font-size: 0.8em; font-style: italic;'>(No se descarga)</small></th>                                        </tr>
-                                    </thead>
-                                    <tbody>
-                            ";
+    <div class='dspace-table-wrap'>
+    <table class='table table-striped table-bordered dspace-table display' style='width:100%;'>
+        <thead>
+            <tr>
+                <th class='dspace-col-item' style='width:220px;'>Item</th>
+                <th class='dspace-col-bitstreams' style='width:360px;'>Bitstreams</th>
+                <th class='dspace-col-preview' style='width:260px;'>Previsualizar</th>
+                <th class='dspace-col-add' style='width:260px; white-space: normal; line-height: 1.2;'>
+                    <div style='display: flex; flex-direction: column; align-items: center;'>
+                        <span>Agregar como URL</span>
+                        <small style='font-size: 0.8em; font-style: italic; margin-top: 2px;'>(No se descarga)</small>
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+";
                             foreach ($collectionItems as $item) {
                                 $title = htmlspecialchars($item['metadata']['dc.title'][0]['value'] ?? 'Sin título', ENT_QUOTES, 'UTF-8');
 
