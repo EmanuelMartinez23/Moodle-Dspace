@@ -97,16 +97,35 @@ class mod_assign_mod_form extends moodleform_mod {
                 if ($block && $block->get_content()) {
                     //Mostramos el contenido del bloque (comunidades, colecciones, etc.)
                     $block_content = $block->get_content()->text;
-                    $mform->addElement('html', 
-                        '<div class="dspace-block mb-3 row  fitem ">
-                                <div class ="text-block col-md-3 col-form-label d-flex pb-0 pr-md-30 pl-md-4 ">
-                                <p class="mt-3 mr-3">Repositorio Institucional (Colecciones)</p>
-                                
-                                </div>
-                                <div class="content col-md-9 d-flex flex-wrap align-items-start felement">'
-                                . $block_content . '
-                                </div>
-                        </div>');
+                    $mform->addElement('html',
+                        '<div class="dspace-block mb-3 row fitem">
+        <div class="text-block col-md-3 col-form-label d-flex pb-0 pr-md-30 pl-md-4">
+            <p class="mt-3 mr-3">Repositorio Institucional (Colecciones)</p>
+        </div>
+        <div class="content col-md-9 d-flex flex-wrap align-items-start felement">
+            <div class="dspace-intro-section mb-4">
+                <div class="card border-0 bg-light">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start">
+                            <div class="mr-3 flex-shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: #0d6efd;">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="card-title h5 mb-2 text-primary" style="font-weight: 600;">Recursos del Repositorio Institucional</h4>
+                                <p class="card-text mb-0 text-muted" style="line-height: 1.5;">
+                                    En esta sección puedes agregar recursos u OVAS a tu tarea, son recursos que se encuentran almacenados en el repositorio Institucional de la universidad.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ' . $block_content . '
+        </div>
+    </div>'
+                    );
                         
                 } else {
                     $mform->addElement('html', '<p>No se pudo crear la instancia del bloque.</p>');
