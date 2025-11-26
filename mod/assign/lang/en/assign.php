@@ -22,7 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['files_processed'] = 'Files processed';
-$string['download_and_store_files'] = 'Descarga los archivos de Dspace seleccionados';
+$string['download_and_store_files'] = 'Descargar archivos seleccionados del repositorio';
 $string['activityattachments'] = 'Assignment activity attachments';
 $string['activitydate:submissionsdue'] = 'Due:';
 $string['activitydate:submissionsopen'] = 'Opens:';

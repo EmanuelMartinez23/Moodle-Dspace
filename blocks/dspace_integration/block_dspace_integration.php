@@ -447,7 +447,7 @@ class block_dspace_integration extends block_base {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="mr-2" style="color: white;">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                     </svg>
-                    <h6 class="mb-0" style="font-weight: 600;">Instrucciones para el uso de recursos</h6>
+                    <h6 class="mb-0 mr-3" style="font-weight: 600;">Instrucciones para el uso de recursos</h6>
                 </div>
                 <div class="collapse-arrow">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="transition: transform 0.3s ease;">
@@ -459,7 +459,7 @@ class block_dspace_integration extends block_base {
         <div id="global-instructions" class="collapse">
             <div class="card-body py-3">
                 <div class="mb-3">
-                    <p class="mb-2"><strong>Visualización de ODA:</strong> Si el recurso es una ODA que se encuentra en el Repositorio, puedes visualizarla antes de agregarla o descargarla haciendo click en el botón <span class="badge badge-primary">EPUB</span>.</p>
+                    <p class="mb-2"><strong>Visualización de ODA:</strong> Si el recurso es una ODA que se encuentra en el Repositorio, puedes visualizarla antes de agregarla o descargarla, haciendo click en el botón <span class="badge badge-primary">EPUB</span>.</p>
                 </div>
                 
                 <div class="row">
