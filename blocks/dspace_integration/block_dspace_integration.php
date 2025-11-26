@@ -480,8 +480,7 @@ class block_dspace_integration extends block_base {
                                             <th class='dspace-col-item' style='width:220px; word-wrap:break-word;'>Item</th>
                                             <th class='dspace-col-bitstreams' style='width:360px; word-wrap:break-word;'>Bitstreams</th>
                                             <th class='dspace-col-preview' style='width:260px; word-wrap:break-word;'>Previsualizar</th>
-                                            <th class='dspace-col-add' style='width:160px; word-wrap:break-word;'>Agregar a tarea</th>
-                                        </tr>
+<th class='dspace-col-add' style='width:160px; word-wrap:break-word;'>Agregar como URL<br><small style='font-size: 0.8em; font-style: italic;'>(No se descarga)</small></th>                                        </tr>
                                     </thead>
                                     <tbody>
                             ";
