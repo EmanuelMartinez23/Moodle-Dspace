@@ -182,13 +182,14 @@ if ($editing) {
                     echo html_writer::end_div(); // card-header
 
                     // Cuerpo colapsable con el formulario.
-                    echo html_writer::start_tag('div', ['id' => $cardid, 'class' => 'collapse']);
-                    echo html_writer::start_div('card-body');
-                    // call out informactivo
                     echo html_writer::start_div('alert alert-info d-flex align-items-center');
-                    $infoicon = $OUTPUT->pix_icon('i/help', 'Información', 'moodle', ['class' => 'mr-2']);
-                    echo $infoicon;
+                    echo '
+                    <svg xmlns="http://www.w3.org/2000/svg" class="bi flex-shrink-0 me-2" width="24" height="24" viewBox="0 0 16 16" role="img" aria-label="Información:">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>';
+                    echo html_writer::start_div();
                     echo html_writer::span('Desde esta sección puede registrar un item en el repositorio en una colección específica si no existe, sugerimos contactar al administrador del repositorio y registrar el item de forma manual para tener una mejor organización.', 'm-0');
+                    echo html_writer::end_div(); // div interno
                     echo html_writer::end_div();
                     // fin call out
 
