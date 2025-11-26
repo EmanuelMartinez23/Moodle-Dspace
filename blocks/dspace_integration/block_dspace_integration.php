@@ -457,8 +457,52 @@ class block_dspace_integration extends block_base {
                         $colName = htmlspecialchars($collection['name'], ENT_QUOTES, 'UTF-8');
                         $colUuid = $collection['uuid'];
 
-                        $this->content->text .= "<li class='toggle'><span class='arrow'>➤</span><span class='toggle'>$colName</span>";
+                        $this->content->text .= '
+            <div class="collection-info-section mb-4">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white py-2">
+                        <div class="d-flex align-items-center">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="mr-2" style="color: white;">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            <h6 class="mb-0" style="font-weight: 600;">Instrucciones para el uso de recursos</h6>
+                        </div>
+                    </div>
+                    <div class="card-body py-3">
+                        <div class="mb-3">
+                            <p class="mb-2"><strong>Visualización de ODA:</strong> Si el recurso es una ODA que se encuentra en el Repositorio, puedes visualizarla antes de agregarla o descargarla haciendo click en el botón <span class="badge badge-primary">EPUB</span>.</p>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge badge-success mr-2">Opción 1</span>
+                                        <h6 class="mb-0 text-success" style="font-weight: 600;">Descargar recursos</h6>
+                                    </div>
+                                    <p class="mb-0 small text-muted">
+                                        Puedes descargar los recursos desde el Repositorio Institucional seleccionándolos y luego hacer click en el botón de <strong>"Descargar archivos seleccionados del repositorio"</strong>. Los recursos se descargan y almacenan en Moodle, se adjuntan en la tarea.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge badge-warning mr-2">Opción 2</span>
+                                        <h6 class="mb-0 text-warning" style="font-weight: 600;">Agregar como enlace</h6>
+                                    </div>
+                                    <p class="mb-0 small text-muted">
+                                        Dar click en el botón <strong>"Agregar"</strong> para agregar el recurso a tu tarea como <strong>"Recursos Externos"</strong>, esto no descarga el recurso al Moodle (no ocupa espacio de almacenamiento), solo se descarga al momento de solicitarlo en cada computadora del usuario solicitante.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>';
 
+                        $this->content->text .= "<li class='toggle'><span class='arrow'>➤</span><span class='toggle'>$colName</span>";
                         try {
                             $collectionItems = array_filter($allItems, function($item) use ($colUuid, $dspaceApiUrl, $token) {
                                 if (!isset($item['_links']['owningCollection']['href'])) return false;
