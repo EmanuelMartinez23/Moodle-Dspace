@@ -182,14 +182,31 @@ if ($editing) {
                     echo html_writer::end_div(); // card-header
 
                     // Cuerpo colapsable con el formulario.
+                    // Cuerpo colapsable con el formulario.
                     echo html_writer::start_tag('div', ['id' => $cardid, 'class' => 'collapse']);
                     echo html_writer::start_div('card-body');
-                    // call out informactivo
-                    echo html_writer::start_div('alert alert-info d-flex align-items-center');
-                    $infoicon = $OUTPUT->pix_icon('i/info', 'Información', 'moodle', ['class' => 'mr-2']);
+
+// Call out informativo con el mismo formato
+                    echo html_writer::start_div('dspace-intro-section mb-4');
+                    echo html_writer::start_div('card border-0 bg-light');
+                    echo html_writer::start_div('card-body p-4');
+                    echo html_writer::start_div('d-flex align-items-start');
+                    echo html_writer::start_div('mr-3 flex-shrink-0');
+                    $infoicon = $OUTPUT->pix_icon('i/info', 'Información', 'moodle', ['class' => 'text-primary']);
                     echo $infoicon;
-                    echo html_writer::span('Desde esta sección puede registrar un item en el repositorio en una colección específica si no existe, sugerimos contactar al administrador del repositorio y registrar el item de forma manual para tener una mejor organización.', 'm-0');
-                    echo html_writer::end_div();
+                    echo html_writer::end_div(); // mr-3
+                    echo html_writer::start_div();
+                    echo html_writer::tag('h4', 'Registro en el Repositorio Institucional',
+                        ['class' => 'card-title h5 mb-2 text-primary', 'style' => 'font-weight: 600;']);
+                    echo html_writer::tag('p', 'Desde esta sección puede registrar un item en el repositorio en una colección específica si no existe, sugerimos contactar al administrador del repositorio y registrar el item de forma manual para tener una mejor organización.',
+                        ['class' => 'card-text mb-0 text-muted', 'style' => 'line-height: 1.5;']);
+                    echo html_writer::end_div(); // div
+                    echo html_writer::end_div(); // d-flex
+                    echo html_writer::end_div(); // card-body
+                    echo html_writer::end_div(); // card
+                    echo html_writer::end_div(); // dspace-intro-section
+
+// Resto de tu formulario...
                     // fin call out
 
                     // Construir formulario manualmente (action al manejador del bloque).
