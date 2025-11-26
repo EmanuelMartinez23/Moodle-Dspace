@@ -185,15 +185,11 @@ if ($editing) {
                     echo html_writer::start_tag('div', ['id' => $cardid, 'class' => 'collapse']);
                     echo html_writer::start_div('card-body');
                     // call out informactivo
-                    echo html_writer::start_div('alert alert-info d-flex align-items-center', ['role' => 'alert']);
-                    echo '
-<svg class="bi flex-shrink-0 me-3" width="24" height="24" fill="currentColor" role="img" aria-label="Información:">
-    <use xlink:href="#info-fill"/>
-</svg>';
-                    echo html_writer::start_div();
-                    echo html_writer::span('Desde esta sección puede registrar un item en el repositorio en una colección específica si no existe, sugerimos contactar al administrador del repositorio y registrar el item de forma manual para tener una mejor organización.');
-                    echo html_writer::end_div(); // div interno para el texto
-                    echo html_writer::end_div(); // alert
+                    echo html_writer::start_div('alert alert-info d-flex align-items-center');
+                    $infoicon = $OUTPUT->pix_icon('i/info', 'Información', 'moodle', ['class' => 'mr-2']);
+                    echo $infoicon;
+                    echo html_writer::span('Desde esta sección puede registrar un item en el repositorio en una colección específica si no existe, sugerimos contactar al administrador del repositorio y registrar el item de forma manual para tener una mejor organización.', 'm-0');
+                    echo html_writer::end_div();
                     // fin call out
 
                     // Construir formulario manualmente (action al manejador del bloque).
