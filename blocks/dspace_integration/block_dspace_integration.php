@@ -440,24 +440,7 @@ class block_dspace_integration extends block_base {
             $this->content->text .= "<h3>📚 Comunidades DSpace</h3>";
             $this->content->text .= "<ul class='list_community'>";
 
-            foreach ($communities['_embedded']['communities'] as $community) {
-                $communityName = htmlspecialchars($community['name'], ENT_QUOTES, 'UTF-8');
-                $communityUuid = $community['uuid'];
-                $this->content->text .= "<li class='toggle'><span class='arrow'>➤</span><span class='toggle'>$communityName</span><ul class='nested'>";
-
-                try {
-                    $collections = $this->getDSpaceCollectionsForCommunity($dspaceApiUrl, $token, $communityUuid);
-                } catch (Exception $e) {
-                    error_log("DSpace Error: Error al obtener colecciones para comunidad $communityUuid: " . $e->getMessage());
-                    $collections = [];
-                }
-
-                if ($collections && isset($collections['_embedded']['collections'])) {
-                    foreach ($collections['_embedded']['collections'] as $collection) {
-                        $colName = htmlspecialchars($collection['name'], ENT_QUOTES, 'UTF-8');
-                        $colUuid = $collection['uuid'];
-
-                        $this->content->text .= '
+            $this->content->text .= '
             <div class="collection-info-section mb-4">
                 <div class="card border-info">
                     <div class="card-header bg-info text-white py-2">
@@ -502,7 +485,25 @@ class block_dspace_integration extends block_base {
                 </div>
             </div>';
 
+            foreach ($communities['_embedded']['communities'] as $community) {
+                $communityName = htmlspecialchars($community['name'], ENT_QUOTES, 'UTF-8');
+                $communityUuid = $community['uuid'];
+                $this->content->text .= "<li class='toggle'><span class='arrow'>➤</span><span class='toggle'>$communityName</span><ul class='nested'>";
+
+                try {
+                    $collections = $this->getDSpaceCollectionsForCommunity($dspaceApiUrl, $token, $communityUuid);
+                } catch (Exception $e) {
+                    error_log("DSpace Error: Error al obtener colecciones para comunidad $communityUuid: " . $e->getMessage());
+                    $collections = [];
+                }
+
+                if ($collections && isset($collections['_embedded']['collections'])) {
+                    foreach ($collections['_embedded']['collections'] as $collection) {
+                        $colName = htmlspecialchars($collection['name'], ENT_QUOTES, 'UTF-8');
+                        $colUuid = $collection['uuid'];
+
                         $this->content->text .= "<li class='toggle'><span class='arrow'>➤</span><span class='toggle'>$colName</span>";
+
                         try {
                             $collectionItems = array_filter($allItems, function($item) use ($colUuid, $dspaceApiUrl, $token) {
                                 if (!isset($item['_links']['owningCollection']['href'])) return false;
