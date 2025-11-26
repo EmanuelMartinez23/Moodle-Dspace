@@ -167,7 +167,7 @@ if ($editing) {
                     // Header con botón de colapso e icono.
                     echo html_writer::start_div('card-header d-flex justify-content-between align-items-center');
                     $titleicon = $OUTPUT->pix_icon('i/upload', 'Subir');
-                    echo html_writer::span($titleicon . ' Repositorio Institucional — Subir archivos a DSpace', 'h6 m-0');
+                    echo html_writer::span($titleicon . ' Repositorio Institucional — Registrar Item y archivos en el repositorio', 'h6 m-0');
                     $btnattrs = [
                         'class' => 'btn btn-link',
                         'type' => 'button',
@@ -184,6 +184,13 @@ if ($editing) {
                     // Cuerpo colapsable con el formulario.
                     echo html_writer::start_tag('div', ['id' => $cardid, 'class' => 'collapse']);
                     echo html_writer::start_div('card-body');
+                    // call out informactivo
+                    echo html_writer::start_div('alert alert-info d-flex align-items-center');
+                    $infoicon = $OUTPUT->pix_icon('i/info', 'Información', 'moodle', ['class' => 'mr-2']);
+                    echo $infoicon;
+                    echo html_writer::span('Desde esta sección puede registrar un item en el repositorio en una colección específica si no existe, sugerimos contactar al administrador del repositorio y registrar el item de forma manual para tener una mejor organización.', 'm-0');
+                    echo html_writer::end_div();
+                    // fin call out
 
                     // Construir formulario manualmente (action al manejador del bloque).
                     $action = new moodle_url('/blocks/dspace_integration/upload.php');
@@ -191,7 +198,7 @@ if ($editing) {
 
                     // Selector de colección.
                     echo html_writer::start_div('form-group');
-                    echo html_writer::tag('label', 'Seleccione la colección', ['for' => 'collection_id']);
+                    echo html_writer::tag('label', 'Seleccione la colección ', ['for' => 'collection_id']);
                     echo html_writer::start_tag('select', ['name' => 'collection_id', 'id' => 'collection_id', 'class' => 'custom-select form-control', 'required' => 'required']);
                     foreach ($communities as $community) {
                         try {
