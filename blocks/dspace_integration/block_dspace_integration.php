@@ -71,8 +71,23 @@ class block_dspace_integration extends block_base {
                         _dtLoadingStarted = true;
                         injectOnce('link', {id: 'dt-bs5-css', rel: 'stylesheet', href: CDN.css});
 
-                        // IMPORTANTE: No manipular RequireJS (define/module) del core de Moodle.
-                        // Interferir con AMD puede romper la carga del editor (p.ej., "No define call for jquery").
+                        var savedDefine = window.define;
+                        var savedModule = window.module;
+                        var hadDefine = Object.prototype.hasOwnProperty.call(window, 'define');
+                        var hadModule = Object.prototype.hasOwnProperty.call(window, 'module');
+
+                        function suppressAMD(){
+                            try {
+                                window.define = undefined;
+                                window.module = undefined;
+                            } catch(e){}
+                        }
+                        function restoreAMD(){
+                            try {
+                                if (hadDefine) { window.define = savedDefine; } else { delete window.define; }
+                                if (hadModule) { window.module = savedModule; } else { delete window.module; }
+                            } catch(e){}
+                        }
 
                         function loadScript(id, src, cb){
                             if (document.getElementById(id)) {
@@ -92,9 +107,10 @@ class block_dspace_integration extends block_base {
                             (document.head || document.documentElement).appendChild(s);
                         }
 
-                        // Cargamos DataTables JS respetando el entorno AMD de la página.
+                        suppressAMD();
                         loadScript('dt-core-js', CDN.jsjq, function(){
                             loadScript('dt-bs5-js', CDN.jsbs, function(){
+                                restoreAMD();
                                 if (callback) callback();
                             });
                         });
