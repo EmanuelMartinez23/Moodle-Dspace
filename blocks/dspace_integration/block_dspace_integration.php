@@ -71,22 +71,22 @@ class block_dspace_integration extends block_base {
                         _dtLoadingStarted = true;
                         injectOnce('link', {id: 'dt-bs5-css', rel: 'stylesheet', href: CDN.css});
 
-                        // Importante: No romper el entorno AMD/RequireJS de Moodle.
-                        // En lugar de anular window.define (lo que causa errores generalizados),
-                        // deshabilitamos temporalmente SOLO la detección AMD (define.amd) durante
-                        // la carga de los scripts de DataTables. Esto fuerza el modo UMD global
-                        // sin afectar a quienes necesitan window.define para registrar módulos.
                         var savedDefine = window.define;
-                        var savedDefineAmd = savedDefine && savedDefine.amd;
-                        function disableAmdDetection(){
-                            if (window.define) {
-                                try { window.define.amd = undefined; } catch(e){}
-                            }
+                        var savedModule = window.module;
+                        var hadDefine = Object.prototype.hasOwnProperty.call(window, 'define');
+                        var hadModule = Object.prototype.hasOwnProperty.call(window, 'module');
+
+                        function suppressAMD(){
+                            try {
+                                window.define = undefined;
+                                window.module = undefined;
+                            } catch(e){}
                         }
-                        function restoreAmdDetection(){
-                            if (window.define) {
-                                try { window.define.amd = savedDefineAmd; } catch(e){}
-                            }
+                        function restoreAMD(){
+                            try {
+                                if (hadDefine) { window.define = savedDefine; } else { delete window.define; }
+                                if (hadModule) { window.module = savedModule; } else { delete window.module; }
+                            } catch(e){}
                         }
 
                         function loadScript(id, src, cb){
@@ -107,15 +107,10 @@ class block_dspace_integration extends block_base {
                             (document.head || document.documentElement).appendChild(s);
                         }
 
-                        disableAmdDetection();
+                        suppressAMD();
                         loadScript('dt-core-js', CDN.jsjq, function(){
-                            // Restauramos detección AMD tras cargar el core.
-                            restoreAmdDetection();
-                            // La integración de Bootstrap 5 de DataTables también usa UMD; aplicamos
-                            // la misma técnica de forma acotada.
-                            disableAmdDetection();
                             loadScript('dt-bs5-js', CDN.jsbs, function(){
-                                restoreAmdDetection();
+                                restoreAMD();
                                 if (callback) callback();
                             });
                         });
