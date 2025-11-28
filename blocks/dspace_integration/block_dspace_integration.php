@@ -221,10 +221,6 @@ class block_dspace_integration extends block_base {
                 window.openPreviewWindow = function(url) {
                     window.open(url, '_blank', 'noopener');
                 };
-                window.previewScormNotice = function(url){
-                    alert('Para previsualizar un paquete SCORM es necesario que el paquete esté desplegado en un servidor web. Intentaremos abrir el archivo, pero si no se muestra, contacte con el administrador.');
-                    window.open(url, '_blank', 'noopener');
-                };
 
                 // Toast mínimo
                 if (typeof window.showToast !== 'function') {
@@ -589,11 +585,6 @@ class block_dspace_integration extends block_base {
                                                 $localReader = new moodle_url('/blocks/dspace_integration/preview_epub.php', ['uuid' => $bitUuid]);
                                                 $previewUrlEsc = htmlspecialchars($localReader->out(false), ENT_QUOTES, 'UTF-8');
                                                 $previewHtml .= "<span class='dspace-preview-cell'><button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button></span><br>";
-                                            } else if ($ext === 'zip' || $ext === 'scorm' || strpos($mime, 'zip') !== false) {
-                                                // Previsualización SCORM (Opción A): visor ligero sin crear actividad
-                                                $launchurl = new moodle_url('/blocks/dspace_integration/preview_scorm.php', ['uuid' => $bitUuid]);
-                                                $launchurlEsc = htmlspecialchars($launchurl->out(false), ENT_QUOTES, 'UTF-8');
-                                                $previewHtml .= "<span class='dspace-preview-cell'><button type='button' class='btn btn-sm btn-secondary' title='Vista previa sin calificaciones' onclick=\"openPreviewWindow('{$launchurlEsc}')\">SCORM</button></span><br>";
                                             } else {
                                                 // Otros tipos: sin previsualización disponible
                                                 $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span><br>";
