@@ -145,11 +145,11 @@ if ($editing && has_capability('moodle/course:create', context_system::instance(
     echo $courserenderer->add_new_course_button();
 }
 
-// Sección extra debajo de cursos: Formulario de subida a DSpace (solo visible en modo edición).
+// Formulario de subida a DSpace (solo visible en modo edición).
 if ($editing) {
     try {
         if (class_exists('dspace_client')) {
-            global $USER, $OUTPUT; // Para iconos y nombre de usuario.
+            global $USER, $OUTPUT;
             $server = get_config('block_dspace_integration', 'server');
             $email = get_config('block_dspace_integration', 'email');
             $password = get_config('block_dspace_integration', 'password');
@@ -159,7 +159,7 @@ if ($editing) {
                 $communities = $client->get_communities();
 
                 if (!empty($communities)) {
-                    // Render de card colapsable con encabezado e icono.
+                    // Render de card
                     $cardid = 'frontpage-dspace-upload';
                     echo html_writer::start_tag('section', ['class' => 'my-5']);
                     echo html_writer::start_div('container');
@@ -206,7 +206,6 @@ if ($editing) {
                     echo html_writer::end_div(); // card
                     echo html_writer::end_div(); // dspace-intro-section
 
-// Resto de tu formulario...
                     // fin call out
 
                     // Construir formulario manualmente (action al manejador del bloque).

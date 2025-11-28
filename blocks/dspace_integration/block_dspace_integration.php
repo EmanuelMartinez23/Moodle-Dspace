@@ -19,11 +19,7 @@ class block_dspace_integration extends block_base {
         $this->content = new stdClass();
 
         $PAGE->requires->jquery();
-        // $PAGE->requires->css(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/css/dataTables.bootstrap5.min.css'));
-        // $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net@1.13.1/js/jquery.dataTables.min.js'), true);
-        // $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/js/dataTables.bootstrap5.min.js'), true);
 
-        // Estilos mínimos para evitar desbordes en tabla y buscador (inyectados inline para compatibilidad)
         $customcss = "
             .block_dspace_integration .dspace-table-wrap { width: 100%; overflow-x: auto; position: relative; }
             .block_dspace_integration .dataTables_wrapper { width: 100%; overflow-x: auto; }
@@ -52,7 +48,6 @@ class block_dspace_integration extends block_base {
 
         $customjs = <<<'JS'
             $(document).ready(function() {
-                // Cargador robusto de DataTables: reintentos periódicos y loader visual.
                 (function(){
                     var CDN = {
                         css: 'https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.1/css/dataTables.bootstrap5.min.css',
@@ -68,15 +63,12 @@ class block_dspace_integration extends block_base {
                         if (attrs.inner) el.innerHTML = attrs.inner;
                         (document.head || document.documentElement).appendChild(el);
                     }
-
-                    // Carga secuencial de scripts DataTables forzando modo no-AMD para evitar
-                    // "Mismatched anonymous define()" cuando RequireJS está presente.
+                    
                     var _dtLoadingStarted = false;
-                    var _dtBs5Ready = false; // bandera para asegurar integración Bootstrap 5 cargada
+                    var _dtBs5Ready = false; 
                     function loadDTAssets(callback){
                         if (_dtLoadingStarted) { if (callback) callback(); return; }
                         _dtLoadingStarted = true;
-                        // Inyectar CSS siempre
                         injectOnce('link', {id: 'dt-bs5-css', rel: 'stylesheet', href: CDN.css});
 
                         var savedDefine = window.define;
@@ -86,7 +78,6 @@ class block_dspace_integration extends block_base {
 
                         function suppressAMD(){
                             try {
-                                // Evitar que los UMD detecten AMD (RequireJS) durante la ejecución del script
                                 window.define = undefined;
                                 window.module = undefined;
                             } catch(e){}
@@ -100,7 +91,6 @@ class block_dspace_integration extends block_base {
 
                         function loadScript(id, src, cb){
                             if (document.getElementById(id)) {
-                                // Si ya existe el nodo, asumimos que fue cargado por otra parte.
                                 if (id === 'dt-bs5-js') { _dtBs5Ready = true; }
                                 if (cb) cb();
                                 return;
@@ -117,7 +107,6 @@ class block_dspace_integration extends block_base {
                             (document.head || document.documentElement).appendChild(s);
                         }
 
-                        // Secuencia: suprimir AMD -> cargar núcleo -> cargar bs5 -> restaurar AMD
                         suppressAMD();
                         loadScript('dt-core-js', CDN.jsjq, function(){
                             loadScript('dt-bs5-js', CDN.jsbs, function(){
@@ -141,9 +130,7 @@ class block_dspace_integration extends block_base {
                     }
 
                     function ensureDTLoaded(){
-                        // jQuery ya es solicitado por el bloque ($PAGE->requires->jquery()), pero validamos.
                         if (!(window.jQuery && jQuery.fn)) return false;
-                        // Asegurar assets cargándose; el retorno final depende de la disponibilidad del plugin
                         loadDTAssets();
                         return !!(jQuery.fn && (jQuery.fn.DataTable || jQuery.fn.dataTable));
                     }
@@ -151,7 +138,6 @@ class block_dspace_integration extends block_base {
                     function initTablesIfReady(){
                         var $ = window.jQuery || window.$;
                         if (!($ && $.fn && ($.fn.DataTable || $.fn.dataTable))) return false;
-                        // No inicializar hasta que la integración de Bootstrap 5 esté lista para evitar paginación como links simples.
                         var bsready = _dtBs5Ready || isBootstrapIntegrationPresent($);
                         if (!bsready) return false;
                         $('.dspace-table').each(function(){
@@ -172,7 +158,6 @@ class block_dspace_integration extends block_base {
                                     { width: '260px', targets: 3 }
                                 ]
                             });
-                            // Mostrar tabla y quitar loader si existe
                             try {
                                 $t.removeClass('dspace-hidden');
                                 var $wrap = $t.closest('.dspace-table-wrap');
@@ -182,7 +167,6 @@ class block_dspace_integration extends block_base {
                         return true;
                     }
 
-                    // Preparar loaders y ocultar tablas mientras no esté DataTables listo.
                     (function prepareLoaders(){
                         var $ = window.jQuery || window.$;
                         var nodes = document.querySelectorAll('.block_dspace_integration .dspace-table');
@@ -199,11 +183,10 @@ class block_dspace_integration extends block_base {
                         }
                     })();
 
-                    // Intentar cargar y luego reintentar periódicamente hasta que esté listo.
                     ensureDTLoaded();
                     var started = Date.now();
-                    var interval = 600; // ms
-                    var maxWait = 15000; // 15s de espera "razonable" antes de avisar (seguimos intentando después)
+                    var interval = 600; 
+                    var maxWait = 15000; 
                     var warned = false;
                     var h = setInterval(function(){
                         try { ensureDTLoaded(); } catch(_){ }
@@ -217,12 +200,10 @@ class block_dspace_integration extends block_base {
                     }, interval);
                 })();
 
-                // Funciones auxiliares de previsualización
                 window.openPreviewWindow = function(url) {
                     window.open(url, '_blank', 'noopener');
                 };
 
-                // Toast mínimo
                 if (typeof window.showToast !== 'function') {
                     window.showToast = function(msg, type){
                         try {
@@ -255,13 +236,10 @@ class block_dspace_integration extends block_base {
                     };
                 }
 
-                // Agregar URL+Nombre de bitstream SIEMPRE a la descripción de la tarea (intro)
-                // Mejora: reintentos automáticos si el editor (TinyMCE/Atto) aún no terminó de inicializarse
                 window.addToAssignmentDetails = async function(url, name){
                     try {
                         if (!url) { showToast('URL inválida.', 'error'); return; }
 
-                        // Inserta en modo HTML (TinyMCE/Atto)
                         function injectListHTML(html){
                             if ((html||'').indexOf(url) !== -1) { return {html: html, added: false, dup: true}; }
                             if ((html||'').indexOf('id="dspace-external-resources"') === -1) {
@@ -273,17 +251,14 @@ class block_dspace_integration extends block_base {
                             return {html: html, added: true, dup: false};
                         }
 
-                        // Inserta en modo texto plano (textarea sin editor), evitando HTML "en seco" en la edición
                         function injectListText(text){
                             var current = String(text||'');
                             if (current.indexOf(url) !== -1) { return {text: current, added: false, dup: true}; }
                             var header = 'Recursos Externos';
                             var block = '';
                             if (current.indexOf(header) === -1) {
-                                // Crear una nueva sección al final
                                 block = (current.trim().length ? '\n\n' : '') + header + '\n\n';
                             }
-                            // Agregar ítem en formato legible sin HTML
                             block += '* ' + (name || url) + ' - ' + url + '\n';
                             return {text: current + block, added: true, dup: false};
                         }
@@ -294,12 +269,10 @@ class block_dspace_integration extends block_base {
                             return /(\b|_)intro(editor)?(\b|$)/.test(id) || /(\b|_)intro(editor)?(\b|$)/.test(nm);
                         }
 
-                        // 1 y 2) Espera unificada hasta ~3s intentando TinyMCE y Atto antes de caer a textarea
                         var attempt = 0;
                         var maxAttempts = 15; // ~15 * 200ms = 3s
                         var foundAndInserted = false;
                         while (attempt < maxAttempts && !foundAndInserted) {
-                            // TinyMCE
                             if (window.tinymce) {
                                 var targetEditor = null;
                                 if (tinymce.editors && tinymce.editors.length) {
@@ -330,7 +303,6 @@ class block_dspace_integration extends block_base {
                                 }
                             }
 
-                            // Atto
                             var introTextareaProbe = Array.from(document.querySelectorAll('textarea')).find(function(el){ return matchesIntroIdName(el); });
                             var attoWrapper = introTextareaProbe ? introTextareaProbe.closest('.editor_atto') : null;
                             var atto = attoWrapper ? attoWrapper.querySelector('.editor_atto_content') : null;
@@ -353,7 +325,6 @@ class block_dspace_integration extends block_base {
                             await new Promise(function(r){ setTimeout(r, 200); });
                         }
 
-                        // 3) Fallback: textarea intro/introeditor en texto plano (sin HTML crudo) tras agotar la espera
                         var introTextarea = Array.from(document.querySelectorAll('textarea')).find(function(el){ return matchesIntroIdName(el); });
                         if (introTextarea) {
                             var val = introTextarea.value || '';
@@ -366,7 +337,6 @@ class block_dspace_integration extends block_base {
                             return;
                         }
 
-                        // 4) Fallback: copiar al portapapeles
                         await navigator.clipboard.writeText(url);
                         showToast('No se encontró la descripción de la tarea. Copiamos la URL al portapapeles.', 'error');
                     } catch(e){
@@ -375,24 +345,20 @@ class block_dspace_integration extends block_base {
                     }
                 };
 
-                // Delegación para botones Agregar: usan data-url y data-name
                 document.addEventListener('click', async function(ev){
                     var btn = ev.target && ev.target.closest('.btn-dspace-add');
                     if (!btn) return;
-                    // Evitar que cualquier comportamiento por defecto o burbujeo afecte el primer clic
                     try { ev.preventDefault(); } catch(_){}
                     try { ev.stopPropagation(); } catch(_){}
                     var url = btn.getAttribute('data-url') || '';
                     var name = btn.getAttribute('data-name') || '';
                     if (!url) return;
-                    // Deshabilitar botón mientras se procesa para evitar dobles clics
                     var prevDisabled = btn.disabled;
                     var prevAriaBusy = btn.getAttribute('aria-busy');
                     var prevText = btn.innerHTML;
                     try {
                         btn.disabled = true;
                         btn.setAttribute('aria-busy', 'true');
-                        // Opcional: feedback visual mínimo
                         btn.innerHTML = 'Agregando…';
                         await window.addToAssignmentDetails(url, name);
                     } finally {
@@ -430,7 +396,6 @@ class block_dspace_integration extends block_base {
             }
             $allItems = $allItemsData['_embedded']['items'] ?? [];
 
-            // Inyectamos CSS inline para evitar depender de $PAGE->requires->css_code() (no presente en algunas versiones)
             $this->content->text = "<style>" . $customcss . "</style>";
             $this->content->text .= "<div class='block_dspace_integration'>";
             $this->content->text .= "<h3>📚 Comunidades DSpace</h3>";
@@ -569,10 +534,10 @@ class block_dspace_integration extends block_base {
                                         foreach ($bitstreams as $bitstream) {
                                             $bitUuid = $bitstream['uuid'];
                                             $bitName = htmlspecialchars($bitstream['name'] ?? 'Sin nombre', ENT_QUOTES, 'UTF-8');
-                                            // URL de descarga directa desde DSpace REST (usar el mismo host configurado para descargas)
+                                            // URL de descarga directa desde DSpace
                                             $downloadUrl = "http://192.168.1.27:4000" . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
-                                            // Checkbox + texto por fila, alineado al inicio
+                                            // Checkbox + texto por fila
                                             $bitstreamHtml .= "<div class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div>";
 
                                             // Construcción de enlaces de previsualización por tipo
@@ -581,7 +546,7 @@ class block_dspace_integration extends block_base {
                                             $safeUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
 
                                             if ($ext === 'epub' || $mime === 'application/epub+zip') {
-                                                // Visor EPUB server-side (sin dependencia de epub.js)
+                                                // Visor EPUB server-side
                                                 $localReader = new moodle_url('/blocks/dspace_integration/preview_epub.php', ['uuid' => $bitUuid]);
                                                 $previewUrlEsc = htmlspecialchars($localReader->out(false), ENT_QUOTES, 'UTF-8');
                                                 $previewHtml .= "<span class='dspace-preview-cell'><button type='button' class='btn btn-sm btn-primary' onclick=\"openPreviewWindow('{$previewUrlEsc}')\">EPUB</button></span><br>";
@@ -590,7 +555,7 @@ class block_dspace_integration extends block_base {
                                                 $previewHtml .= "<span class='badge bg-light text-dark'>Sin vista previa</span><br>";
                                             }
 
-                                            // Botón para agregar URL del bitstream a los detalles de la tarea (delegación + data-attrs)
+                                            // Botón para agregar URL del bitstream a los detalles de la tarea
                                             $safeAddUrl = htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8');
                                             $safeNameJs = htmlspecialchars($bitName, ENT_QUOTES, 'UTF-8');
                                             $addHtml .= "<div class='dspace-bit-row'><button type='button' class='btn btn-sm btn-success btn-dspace-add' data-url='{$safeAddUrl}' data-name='{$safeNameJs}'>Agregar</button></div>";

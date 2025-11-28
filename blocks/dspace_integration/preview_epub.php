@@ -1,6 +1,6 @@
 <?php
 // blocks/dspace_integration/preview_epub.php
-// Visor EPUB sin librería JS: descarga y extrae el EPUB en /temp, parsea OPF y sirve capítulos vía proxy local.
+// Visor EPUB : descarga y extrae el EPUB en /temp, parsea OPF y sirve capítulos vía proxy local.
 
 require_once(__DIR__ . '/../../config.php');
 
@@ -55,7 +55,7 @@ if (!file_exists($containerxml)) {
         $url = $apibase . "/bitstreams/{$uuid}/download";
     }
 
-    // Autenticación (similar a otros scripts)
+    // Autenticación
     $ch = curl_init($apiUrl . '/security/csrf');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HEADER, true);
@@ -103,7 +103,6 @@ if (!file_exists($containerxml)) {
     if ($status >= 400) { throw new moodle_exception('errorreadingfile', 'error', '', 'HTTP ' . $status); }
     file_put_contents($zipfile, $data);
 
-    // Extraer
     $zip = new ZipArchive();
     if ($zip->open($zipfile) === true) {
         $zip->extractTo($bookdir);
@@ -113,7 +112,6 @@ if (!file_exists($containerxml)) {
     }
 }
 
-// Parsear container.xml para localizar OPF
 if (!file_exists($containerxml)) {
     throw new moodle_exception('errorreadingfile', 'error', '', 'META-INF/container.xml no encontrado');
 }
@@ -140,13 +138,11 @@ if (!file_exists($opfpath)) {
     throw new moodle_exception('errorreadingfile', 'error', '', 'OPF no existe');
 }
 
-// Parsear OPF: manifest y spine
 $opf = @simplexml_load_file($opfpath);
 if (!$opf) {
     throw new moodle_exception('errorreadingfile', 'error', '', 'OPF inválido');
 }
 
-// Namespaces posibles
 $ns = $opf->getNamespaces(true);
 if (isset($ns['opf'])) { $opf = $opf->children($ns['opf']); }
 
@@ -168,7 +164,6 @@ if (isset($opf->spine->itemref)) {
 }
 
 if (empty($spine)) {
-    // Fallback: intentar primer HTML del manifest
     foreach ($manifest as $h) {
         if (preg_match('~\.(x?html?)$~i', $h)) { $spine[] = $h; break; }
     }
@@ -178,7 +173,6 @@ if (empty($spine)) {
     throw new moodle_exception('errorreadingfile', 'error', '', 'No hay capítulos en el EPUB');
 }
 
-// Normalizar base del OPF para resolver rutas relativas de capítulos
 $opfdir = trim(str_replace('\\', '/', dirname($rootfile)), './');
 if ($opfdir !== '' && $opfdir !== '.') {
     $spine = array_map(function($p) use ($opfdir){ return dspace_epub_safepath($opfdir . '/' . $p); }, $spine);
@@ -187,7 +181,6 @@ if ($opfdir !== '' && $opfdir !== '.') {
 $count = count($spine);
 $nav = max(0, min($count - 1, $nav));
 
-// Construir URL al servidor de recursos
 $serveurl = new moodle_url('/blocks/dspace_integration/serve_epub.php', ['uuid' => $uuid]);
 $chapter = $spine[$nav];
 $chapterurl = new moodle_url($serveurl, ['file' => $chapter]);
