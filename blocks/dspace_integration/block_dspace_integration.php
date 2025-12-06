@@ -404,6 +404,25 @@ class block_dspace_integration extends block_base {
         $username = get_config('block_dspace_integration', 'email');
         $password = get_config('block_dspace_integration', 'password');
 
+        // Derivar la URL base del frontend de DSpace (puerto 4000) a partir de la URL de la API.
+        $dspaceFrontendBase = 'http://localhost:4000';
+        if (!empty($dspaceApiUrl)) {
+            $parts = @parse_url($dspaceApiUrl);
+            $scheme = isset($parts['scheme']) && $parts['scheme'] !== '' ? $parts['scheme'] : 'http';
+            $host = $parts['host'] ?? '';
+            // En algunos casos la URL podría venir sin esquema/host válidos; intentamos extraer el host manualmente.
+            if (empty($host)) {
+                // Quitar protocolo si existe y dividir por '/' para tomar el dominio:puerto.
+                $tmp = preg_replace('~^[a-zA-Z]+://~', '', (string)$dspaceApiUrl);
+                $tmp = explode('/', $tmp, 2)[0];
+                // Si incluye puerto, split por ':' y tomar el primer segmento como host.
+                $host = explode(':', $tmp, 2)[0];
+            }
+            if (!empty($host)) {
+                $dspaceFrontendBase = $scheme . '://' . $host . ':4000';
+            }
+        }
+
         try {
             $token = $this->authenticateWithDSpace($dspaceApiUrl, $username, $password);
             if (!$token) {
@@ -563,8 +582,8 @@ class block_dspace_integration extends block_base {
                                         foreach ($bitstreams as $bitstream) {
                                             $bitUuid = $bitstream['uuid'];
                                             $bitName = htmlspecialchars($bitstream['name'] ?? 'Sin nombre', ENT_QUOTES, 'UTF-8');
-                                            // URL de descarga directa desde DSpace
-                                            $downloadUrl = "http://192.168.1.27:4000" . "/bitstreams/{$bitUuid}/download";
+                                            // URL de descarga directa desde el frontend de DSpace, derivado de la configuración de server
+                                            $downloadUrl = rtrim($dspaceFrontendBase, '/') . "/bitstreams/{$bitUuid}/download";
                                             $downloadBadge = "<a href='{$downloadUrl}' target='_blank' class='text-decoration-none'>{$bitName}</a>";
                                             // Checkbox + texto por fila
                                             $bitstreamHtml .= "<div class='dspace-bit-row'><input type='checkbox' name='bitstreams[]' value='{$bitUuid}'> <span>{$bitName}</span></div>";
