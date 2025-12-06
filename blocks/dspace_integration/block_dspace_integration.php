@@ -71,33 +71,77 @@ class block_dspace_integration extends block_base {
                         _dtLoadingStarted = true;
                         injectOnce('link', {id: 'dt-bs5-css', rel: 'stylesheet', href: CDN.css});
 
-                        // Carga controlada por <script>, desactivando SOLO define.amd durante la evaluación
-                        // para evitar que DataTables intente registrarse como AMD y cause
-                        // "Mismatched anonymous define()" en RequireJS de Moodle.
-                        function loadScriptNoAMD(id, src, cb){
+                        // Carga en aislamiento SIN tocar window.define / define.amd.
+                        // Descargamos el JS como texto y lo ejecutamos dentro de una IIFE
+                        // que sombrea (shadow) define y module, evitando que UMD detecte AMD,
+                        // sin impacto global para RequireJS de Moodle.
+                        function loadScriptIsolated(id, src, cb){
                             if (document.getElementById(id)) { if (id === 'dt-bs5-js') { _dtBs5Ready = true; } cb && cb(); return; }
-                            var s = document.createElement('script');
-                            s.id = id; s.src = src; s.async = true;
 
-                            var hadDefine = typeof window.define === 'function';
-                            var savedAMD = hadDefine ? window.define.amd : undefined;
-                            // Desactivar bandera AMD sin eliminar define().
-                            if (hadDefine) { try { window.define.amd = undefined; } catch(e){} }
+                            function inject(code){
+                                try {
+                                    var wrapper = "(function(){ var define = void 0; var module = void 0;\n" + code + "\n})();";
+                                    var el = document.createElement('script');
+                                    el.id = id;
+                                    el.type = 'text/javascript';
+                                    el.text = wrapper;
+                                    (document.head || document.documentElement).appendChild(el);
+                                    if (id === 'dt-bs5-js') { _dtBs5Ready = true; }
+                                    cb && cb();
+                                } catch (e){
+                                    // Fallback de seguridad: si falla la inyección inline, intentamos via src normal
+                                    try {
+                                        var s = document.createElement('script');
+                                        s.id = id; s.src = src; s.async = true;
+                                        s.onload = function(){ if (id === 'dt-bs5-js') { _dtBs5Ready = true; } cb && cb(); };
+                                        s.onerror = function(){ cb && cb(); };
+                                        (document.head || document.documentElement).appendChild(s);
+                                    } catch(_) { cb && cb(); }
+                                }
+                            }
 
-                            s.onload = function(){
-                                if (hadDefine) { try { window.define.amd = savedAMD; } catch(e){} }
-                                if (id === 'dt-bs5-js') { _dtBs5Ready = true; }
-                                cb && cb();
-                            };
-                            s.onerror = function(){
-                                if (hadDefine) { try { window.define.amd = savedAMD; } catch(e){} }
-                                cb && cb();
-                            };
-                            (document.head || document.documentElement).appendChild(s);
+                            // fetch con fallback a XHR para compatibilidad
+                            if (window.fetch) {
+                                fetch(src, {credentials: 'omit', cache: 'default'}).then(function(r){ return r.text(); })
+                                    .then(function(txt){ inject(txt); })
+                                    .catch(function(){
+                                        try {
+                                            var s = document.createElement('script');
+                                            s.id = id; s.src = src; s.async = true;
+                                            s.onload = function(){ if (id === 'dt-bs5-js') { _dtBs5Ready = true; } cb && cb(); };
+                                            s.onerror = function(){ cb && cb(); };
+                                            (document.head || document.documentElement).appendChild(s);
+                                        } catch(_) { cb && cb(); }
+                                    });
+                            } else {
+                                try {
+                                    var xhr = new XMLHttpRequest();
+                                    xhr.open('GET', src, true);
+                                    xhr.onreadystatechange = function(){
+                                        if (xhr.readyState === 4){
+                                            if (xhr.status >= 200 && xhr.status < 300){ inject(xhr.responseText || ''); }
+                                            else {
+                                                var s = document.createElement('script');
+                                                s.id = id; s.src = src; s.async = true;
+                                                s.onload = function(){ if (id === 'dt-bs5-js') { _dtBs5Ready = true; } cb && cb(); };
+                                                s.onerror = function(){ cb && cb(); };
+                                                (document.head || document.documentElement).appendChild(s);
+                                            }
+                                        }
+                                    };
+                                    xhr.send(null);
+                                } catch (e){
+                                    var s2 = document.createElement('script');
+                                    s2.id = id; s2.src = src; s2.async = true;
+                                    s2.onload = function(){ if (id === 'dt-bs5-js') { _dtBs5Ready = true; } cb && cb(); };
+                                    s2.onerror = function(){ cb && cb(); };
+                                    (document.head || document.documentElement).appendChild(s2);
+                                }
+                            }
                         }
 
-                        loadScriptNoAMD('dt-core-js', CDN.jsjq, function(){
-                            loadScriptNoAMD('dt-bs5-js', CDN.jsbs, function(){ if (callback) callback(); });
+                        loadScriptIsolated('dt-core-js', CDN.jsjq, function(){
+                            loadScriptIsolated('dt-bs5-js', CDN.jsbs, function(){ if (callback) callback(); });
                         });
                     }
 
