@@ -9,7 +9,7 @@ require_login();
 global $CFG, $USER, $PAGE, $OUTPUT;
 
 $uuid = optional_param('uuid', '', PARAM_ALPHANUMEXT); // UUID del bitstream EPUB en DSpace
-$nav = optional_param('nav', 0, PARAM_INT);            // índice del spine a mostrar
+$nav = optional_param('nav', 1, PARAM_INT);            // índice del spine a mostrar (por defecto, capítulo 2)
 
 if (empty($uuid)) {
     throw new moodle_exception('missingparam', 'error', '', 'uuid');
