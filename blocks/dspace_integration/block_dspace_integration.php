@@ -71,28 +71,33 @@ class block_dspace_integration extends block_base {
                         _dtLoadingStarted = true;
                         injectOnce('link', {id: 'dt-bs5-css', rel: 'stylesheet', href: CDN.css});
 
-                        function loadScript(id, src, cb){
-                            if (document.getElementById(id)) {
-                                if (id === 'dt-bs5-js') { _dtBs5Ready = true; }
-                                if (cb) cb();
-                                return;
-                            }
+                        // Carga controlada por <script>, desactivando SOLO define.amd durante la evaluación
+                        // para evitar que DataTables intente registrarse como AMD y cause
+                        // "Mismatched anonymous define()" en RequireJS de Moodle.
+                        function loadScriptNoAMD(id, src, cb){
+                            if (document.getElementById(id)) { if (id === 'dt-bs5-js') { _dtBs5Ready = true; } cb && cb(); return; }
                             var s = document.createElement('script');
-                            s.id = id;
-                            s.src = src;
-                            s.async = true;
+                            s.id = id; s.src = src; s.async = true;
+
+                            var hadDefine = typeof window.define === 'function';
+                            var savedAMD = hadDefine ? window.define.amd : undefined;
+                            // Desactivar bandera AMD sin eliminar define().
+                            if (hadDefine) { try { window.define.amd = undefined; } catch(e){} }
+
                             s.onload = function(){
+                                if (hadDefine) { try { window.define.amd = savedAMD; } catch(e){} }
                                 if (id === 'dt-bs5-js') { _dtBs5Ready = true; }
                                 cb && cb();
                             };
-                            s.onerror = function(){ cb && cb(); };
+                            s.onerror = function(){
+                                if (hadDefine) { try { window.define.amd = savedAMD; } catch(e){} }
+                                cb && cb();
+                            };
                             (document.head || document.documentElement).appendChild(s);
                         }
 
-                        loadScript('dt-core-js', CDN.jsjq, function(){
-                            loadScript('dt-bs5-js', CDN.jsbs, function(){
-                                if (callback) callback();
-                            });
+                        loadScriptNoAMD('dt-core-js', CDN.jsjq, function(){
+                            loadScriptNoAMD('dt-bs5-js', CDN.jsbs, function(){ if (callback) callback(); });
                         });
                     }
 
