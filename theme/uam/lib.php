@@ -117,7 +117,7 @@ textarea.form-control:focus,
 
 /* Tablas */
 table.table thead th {
-  background: var(--uam-gray-100);
+  background: mix($uam-primary, #fff, 96%);
   color: var(--uam-gray-900);
 }
 table.table tbody tr:hover {
@@ -167,13 +167,14 @@ footer.footer {
 #page-footer a:hover { color: var(--uam-white); }
 
 /* Login */
-/* Fondo de login: aplicar también en body y con mayor especificidad para vencer el gradiente de Boost */
+/* Fondo de login: usar SIEMPRE la imagen institucional, sin color blanco de fondo */
 html body.pagelayout-login,
 html body.pagelayout-login #page,
 body.pagelayout-login,
 body.pagelayout-login #page {
-  background: var(--uam-gray-100) url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
+  background: url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
   background-size: cover !important;
+  background-color: transparent !important;
 }
 body.pagelayout-login #region-main .card,
 body.pagelayout-login .login-container .card {
@@ -181,8 +182,14 @@ body.pagelayout-login .login-container .card {
   border: none;
   box-shadow: 0 10px 30px rgba(0,0,0,.25);
 }
+/* Caja principal de login sin fondo blanco */
+body.pagelayout-login .login-container {
+  background-color: rgba(0,0,0,.35) !important;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.12);
+}
 body.pagelayout-login h1, body.pagelayout-login h2, body.pagelayout-login h3 {
-  color: var(--uam-black);
+  color: #fff;
 }
 
 /* Logo institucional dentro de la caja de login (aprovecha el contenedor de Boost) */
@@ -348,15 +355,33 @@ label, .form-label { color: var(--uam-gray-900); }
    Ampliación de diseño UAM Lerma para TODAS las páginas
    ========================================================== */
 
-/* Fondo institucional sutil en todo el sitio (excepto login y popup/embedded) */
-body:not(.pagelayout-login):not(.pagelayout-popup):not(.pagelayout-embedded) #page {
-  background-image:
-    linear-gradient(rgba(173, 37, 168, .03), rgba(173, 37, 168, .03)),
-    url('[[pix:theme|fondo-uam]]');
-  background-size: auto, cover;
-  background-attachment: fixed, fixed;
-  background-position: center, center;
+/* Fondo institucional en todo el sitio (excepto popup/embedded) */
+html,
+body {
+  background: url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
+  background-size: cover !important;
 }
+/* Incluir también popups/embedded: no queremos fondo blanco en ningún lado */
+.pagelayout-popup html, .pagelayout-popup body,
+.pagelayout-embedded html, .pagelayout-embedded body {
+  background: url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
+  background-size: cover !important;
+}
+/* Asegurar transparencia de contenedores base para que se vea el fondo */
+#page,
+#page-wrapper,
+#page-content,
+.region-main,
+#region-main,
+.main-inner,
+.drawercontent,
+.drawer,
+.container-fluid,
+.container {
+  background: transparent !important;
+}
+/* Mantener el cajón de navegación legible sobre el fondo */
+#nav-drawer { background-color: rgba(0,0,0,.8) !important; }
 
 /* Cabecera de página / contexto (curso, perfil, etc.) */
 .page-context-header {
@@ -544,12 +569,12 @@ hr {
   color: var(--uam-primary);
 }
 
-/* Login: overlay sutil para mejorar legibilidad de la tarjeta */
+/* Login: overlay sutil para mejorar legibilidad de la tarjeta (sin blanco) */
 body.pagelayout-login #page::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(255,255,255,.08);
+  background: rgba(0,0,0,.25);
 }
 
 /* Botones outline con colores UAM */
@@ -558,6 +583,28 @@ body.pagelayout-login #page::before {
   border-color: var(--uam-primary);
 }
 .btn-outline-primary:hover { background: var(--uam-primary); color: #fff; }
+
+/* Superficies (evitar blanco liso): usar tintes del primario */
+.card,
+.block.card,
+.dropdown-menu,
+.modal-content,
+.popover,
+.toast {
+  background-color: mix($uam-primary, #fff, 96%);
+}
+.bg-white { background-color: mix($uam-primary, #fff, 97%) !important; }
+.bg-light, .bg-body, .bg-body-tertiary { background-color: mix($uam-primary, #fff, 97%) !important; }
+
+/* Campos de formulario sin blanco puro */
+input.form-control,
+textarea.form-control,
+select.form-select,
+.form-control,
+.form-select {
+  background-color: mix($uam-primary, #fff, 97%);
+  color: var(--uam-gray-900);
+}
 
 /* Tablas con zebra striping accesible */
 .table-striped > tbody > tr:nth-of-type(odd) > * {
@@ -609,6 +656,7 @@ function theme_uam_get_pre_scss($theme): string {
 $primary: #AD25A8;
 $secondary: #495057;
 $body-color: #212529;
+$body-bg: transparent; // Evita fondo blanco por defecto en todo el sitio
 $link-color: $primary;
 
 // Colores adicionales de estado (mantener accesibilidad)
@@ -649,6 +697,22 @@ $nav-tabs-link-hover-border-color: mix($primary, #fff, 60%) mix($primary, #fff, 
 // Breadcrumb
 $breadcrumb-divider-color: $secondary;
 $breadcrumb-active-color: $secondary;
+
+// Login: eliminar gradiente por defecto para que se vea la imagen institucional
+$loginbackground-gradient-from: transparent;
+$loginbackground-gradient-to: transparent;
+
+// Evitar blancos en superficies por defecto de Bootstrap
+$card-bg: mix($primary, #fff, 96%);
+$dropdown-bg: mix($primary, #fff, 96%);
+$modal-content-bg: mix($primary, #fff, 96%);
+$popover-bg: mix($primary, #fff, 96%);
+$toast-background-color: mix($primary, #fff, 96%);
+$input-bg: mix($primary, #fff, 97%);
+$form-select-bg: mix($primary, #fff, 97%);
+$table-bg: transparent;
+$table-striped-bg: rgba(173, 37, 168, .03);
+$table-hover-bg: mix($primary, #fff, 96%);
 SCSS;
 
     return $prescss;

@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
   <title id="title">Fondo UAM Lerma</title>
-  <desc id="desc">Fondo institucional con motivo geométrico sutil en tonos UAM</desc>
+  <desc id="desc">Fondo institucional en tonos UAM (sin blanco), apto para cubrir toda la pantalla</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f8f9fa"/>
-      <stop offset="100%" stop-color="#ffffff"/>
+      <stop offset="0%" stop-color="#1a0019"/>
+      <stop offset="100%" stop-color="#3a0037"/>
     </linearGradient>
     <pattern id="pat" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(0)">
       <rect x="0" y="0" width="40" height="40" fill="none"/>
-      <circle cx="0" cy="0" r="1.5" fill="#AD25A8" opacity="0.18"/>
-      <circle cx="20" cy="20" r="1.5" fill="#AD25A8" opacity="0.14"/>
-      <circle cx="0" cy="20" r="1" fill="#212529" opacity="0.06"/>
-      <circle cx="20" cy="0" r="1" fill="#212529" opacity="0.06"/>
+      <circle cx="0" cy="0" r="1.5" fill="#AD25A8" opacity="0.22"/>
+      <circle cx="20" cy="20" r="1.5" fill="#AD25A8" opacity="0.18"/>
+      <circle cx="0" cy="20" r="1" fill="#AD25A8" opacity="0.08"/>
+      <circle cx="20" cy="0" r="1" fill="#AD25A8" opacity="0.08"/>
     </pattern>
   </defs>
   <rect width="100%" height="100%" fill="url(#bg)"/>
-  <rect width="100%" height="100%" fill="url(#pat)"/>
-  <g opacity="0.08">
+  <rect width="100%" height="100%" fill="url(#pat)" opacity="0.25"/>
+  <g opacity="0.25">
     <path d="M0,850 C300,700 500,1000 900,880 C1200,780 1350,860 1600,840 C1760,828 1880,860 1920,880 L1920,1080 L0,1080 Z" fill="#AD25A8"/>
   </g>
 </svg>
