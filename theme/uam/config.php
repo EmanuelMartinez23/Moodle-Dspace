@@ -31,7 +31,7 @@ $THEME->name = 'uam';
 // Inherit everything from Boost.
 $THEME->parents = ['boost'];
 
-$THEME->sheets = [];
+$THEME->sheets = ['uam'];
 $THEME->editor_sheets = [];
 $THEME->editor_scss = ['editor'];
 
@@ -40,6 +40,7 @@ $THEME->scss = function($theme) {
     return theme_boost_get_main_scss_content($theme);
 };
 
+$THEME->prescsscallback = 'theme_uam_get_pre_scss';
 $THEME->extrascsscallback = 'theme_uam_get_extra_scss';
 
 // Keep Boost layouts and behaviours via parent.

@@ -247,3 +247,34 @@ SCSS;
 
     return $scss;
 }
+
+/**
+ * SCSS que se inyecta ANTES de compilar Bootstrap/Boost.
+ * Útil para sobreescribir variables de Bootstrap y así recolorear componentes nativos.
+ *
+ * @param theme_config $theme
+ * @return string
+ */
+function theme_uam_get_pre_scss($theme): string {
+    $prescss = <<<'SCSS'
+// Variables Bootstrap/Boost sobreescritas por UAM Lerma
+$primary: #AD25A8;
+$secondary: #495057;
+$body-color: #212529;
+$link-color: $primary;
+
+// Navbar oscuro institucional
+$navbar-dark-color: #ffffff;
+$navbar-dark-hover-color: mix(#ffffff, $primary, 75%);
+$navbar-dark-active-color: $navbar-dark-hover-color;
+$navbar-dark-brand-color: #ffffff;
+$navbar-dark-brand-hover-color: $navbar-dark-hover-color;
+$navbar-dark-bg: #000000;
+
+// Botones
+$btn-focus-width: .25rem;
+$btn-focus-box-shadow: 0 0 0 .25rem rgba(173, 37, 168, .25);
+SCSS;
+
+    return $prescss;
+}

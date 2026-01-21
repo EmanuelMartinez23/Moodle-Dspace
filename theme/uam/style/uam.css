@@ -1,0 +1,7 @@
+/* Hoja base del tema UAM Lerma. 
+   Se mantiene mínima porque la mayor parte del estilo se inyecta vía SCSS (pre y extra).
+   Este archivo evita 404 de $THEME->sheets y permite añadir reglas puntuales si se requiere. */
+
+/* Regla de comprobación visual (puede eliminarse):
+html.uam-theme-loaded body { outline: none; }
+*/
