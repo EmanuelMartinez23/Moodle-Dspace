@@ -121,7 +121,8 @@ table.table thead th {
   color: var(--uam-gray-900);
 }
 table.table tbody tr:hover {
-  background: mix(var(--uam-gray-100), #fff, 50%);
+  /* Usar variable SCSS en mix() para evitar error de compilación (Sass no acepta var() dentro de mix). */
+  background: mix($uam-gray-100, #fff, 50%);
 }
 
 /* Navbar / Header */
