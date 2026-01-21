@@ -167,7 +167,9 @@ footer.footer {
 #page-footer a:hover { color: var(--uam-white); }
 
 /* Login */
-/* Fondo de login: aplicar también en body para asegurar visibilidad */
+/* Fondo de login: aplicar también en body y con mayor especificidad para vencer el gradiente de Boost */
+html body.pagelayout-login,
+html body.pagelayout-login #page,
 body.pagelayout-login,
 body.pagelayout-login #page {
   background: var(--uam-gray-100) url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
@@ -181,6 +183,21 @@ body.pagelayout-login .login-container .card {
 }
 body.pagelayout-login h1, body.pagelayout-login h2, body.pagelayout-login h3 {
   color: var(--uam-black);
+}
+
+/* Logo institucional dentro de la caja de login (aprovecha el contenedor de Boost) */
+body.pagelayout-login .login-container .login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  margin-bottom: .75rem;
+  background: url('[[pix:theme|uam-logo]]') no-repeat center/contain;
+}
+/* Si existe una imagen interna, mantenla oculta para no duplicar */
+body.pagelayout-login .login-container .login-logo img {
+  opacity: 0;
+  width: 0; height: 0;
 }
 
 /* Dashboard, tarjetas y navegación lateral */
@@ -440,6 +457,10 @@ body:not(.pagelayout-login):not(.pagelayout-popup):not(.pagelayout-embedded) #pa
 /* Actividades específicas (Assign, Quiz, Forum ya cubiertos en parte) */
 .path-mod-assign .submissionstatustable th { background: var(--uam-gray-100); }
 .path-mod-assign .gradingtable tbody tr:hover td { background: mix($uam-primary, #fff, 96%); }
+.path-mod-assign .submissionstatustable caption,
+.path-mod-assign h2, .path-mod-assign h3 {
+  color: var(--uam-primary);
+}
 .path-mod-forum .discussion .starter .subject a { color: var(--uam-primary); }
 .path-mod-quiz .quiznavigation .qnbutton.thispage { border-color: var(--uam-primary); }
 

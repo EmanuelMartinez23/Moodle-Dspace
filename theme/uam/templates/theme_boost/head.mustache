@@ -1,0 +1,14 @@
+{{!
+    Override de plantilla de Boost para el tema hijo UAM Lerma.
+    Forzamos el uso del logotipo UAM como favicon/icono de pestaña.
+}}
+{{{ output.doctype }}}
+<html {{{ output.htmlattributes }}}>
+<head>
+    <title>{{{ output.page_title }}}</title>
+    {{{ output.standard_head_html }}}
+    <link rel="icon" href="[[pix:theme|uam-logo]]">
+    <link rel="shortcut icon" href="[[pix:theme|uam-logo]]">
+    <link rel="apple-touch-icon" href="[[pix:theme|uam-logo]]">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>

@@ -1,0 +1,36 @@
+{{!
+    Este archivo forma parte de Moodle - http://moodle.org/
+
+    Moodle es software libre: puedes redistribuirlo y/o modificarlo
+    bajo los términos de la Licencia Pública General de GNU publicada por
+    la Free Software Foundation, ya sea la versión 3 de la Licencia, o
+    (a tu elección) cualquier versión posterior.
+
+    Moodle se distribuye con la esperanza de que sea útil,
+    pero SIN NINGUNA GARANTÍA; incluso sin la garantía implícita de
+    COMERCIABILIDAD o IDONEIDAD PARA UN PROPÓSITO PARTICULAR.  Ver la
+    Licencia Pública General de GNU para más detalles.
+
+    Deberías haber recibido una copia de la Licencia Pública General de GNU
+    junto con Moodle.  En caso contrario, ver <http://www.gnu.org/licenses/>.
+}}
+{{!
+    Encabezado de página para el tema hijo UAM Lerma.
+    Basado en theme_boost/templates/head.mustache, pero forzando favicon/logo UAM.
+}}
+{{{ output.doctype }}}
+<html {{{ output.htmlattributes }}}>
+<head>
+    <title>{{{ output.page_title }}}</title>
+    {{{ output.standard_head_html }}}
+    {{! Forzar favicon/logotipo UAM en las pestañas del navegador }}
+    <link rel="icon" type="image/svg+xml" href="[[pix:theme|uam-logo]]">
+    <link rel="shortcut icon" href="[[pix:theme|uam-logo]]">
+    {{! Opcional: icono para Apple }}
+    <link rel="apple-touch-icon" href="[[pix:theme|uam-logo]]">
+    {{! Fallbacks de tamaños comunes (si existe PNG/JPG con el mismo nombre, Moodle lo servirá) }}
+    <link rel="icon" sizes="32x32" href="[[pix:theme|uam-logo]]">
+    <link rel="icon" sizes="192x192" href="[[pix:theme|uam-logo]]">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{! Nota: mantenemos el resto del head estándar vía output.standard_head_html }}
+</head>
