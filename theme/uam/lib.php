@@ -142,6 +142,13 @@ table.table tbody tr:hover {
 }
 
 /* Logo institucional en navbar (cuando aplique) */
+/* Logo institucional: aplicar también directamente al elemento para mayor compatibilidad */
+.navbar .navbar-brand {
+  position: relative;
+  min-height: 32px;
+  padding-left: 120px; /* deja espacio para el logo */
+  background: url('[[pix:theme|uam-logo]]') no-repeat left center / 112px 28px;
+}
 .navbar .navbar-brand::before {
   content: '';
   display: inline-block;
@@ -160,9 +167,11 @@ footer.footer {
 #page-footer a:hover { color: var(--uam-white); }
 
 /* Login */
+/* Fondo de login: aplicar también en body para asegurar visibilidad */
+body.pagelayout-login,
 body.pagelayout-login #page {
-  background: var(--uam-gray-100) url('[[pix:theme|fondo-uam]]') no-repeat center center fixed;
-  background-size: cover;
+  background: var(--uam-gray-100) url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
+  background-size: cover !important;
 }
 body.pagelayout-login #region-main .card,
 body.pagelayout-login .login-container .card {
@@ -234,15 +243,89 @@ label, .form-label { color: var(--uam-gray-900); }
 
 /* Responsive */
 @media (max-width: 991.98px) {
+  .navbar .navbar-brand { padding-left: 104px; background-size: 96px 24px; }
   .navbar .navbar-brand::before { width: 96px; height: 24px; }
 }
 @media (max-width: 575.98px) {
+  .navbar .navbar-brand { padding-left: 96px; background-size: 88px 22px; }
   .navbar .navbar-brand::before { width: 88px; height: 22px; }
 }
 
 /* Asegurar contraste mínimo AA en elementos clave */
 .btn-primary { text-shadow: 0 1px 0 rgba(0,0,0,.2); }
 .navbar .nav-link { text-shadow: none; }
+
+/* Realces adicionales en todo el sitio */
+/* Tabs y navegación secundaria */
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+  color: var(--uam-primary);
+  border-color: var(--uam-primary) var(--uam-primary) transparent;
+}
+.nav-tabs .nav-link:hover {
+  border-color: mix($uam-primary, #fff, 60%);
+}
+
+/* Botones de acción en cabecera de curso */
+.page-context-header .btn,
+.page-header-headings + .btn,
+.context-header-settings-menu .btn {
+  border-radius: .4rem;
+}
+
+/* Cajones laterales (drawers) */
+#nav-drawer {
+  background: #0f0f10;
+}
+#nav-drawer .list-group .list-group-item {
+  background: transparent;
+  color: #e9ecef;
+}
+#nav-drawer .list-group .list-group-item:hover,
+#nav-drawer .list-group .list-group-item.active {
+  background: rgba(173, 37, 168, .15);
+  color: #ffffff;
+}
+
+/* Tarjetas de curso y portada de curso */
+.course-card .course-summaryitem,
+.coursebox {
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.course-card:hover,
+.coursebox:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,.08); }
+
+/* Encabezados de bloques con acento */
+.block .card-header {
+  border-left: 4px solid var(--uam-primary);
+}
+
+/* Actividades (módulos) */
+.activity-item .activity-badges .badge { background: var(--uam-primary); }
+.activity-item .activity-actions .btn-link { color: var(--uam-primary); }
+
+/* Foro */
+.forum-post .subject { color: var(--uam-primary); }
+.forum-post .header .author a { color: var(--uam-gray-700); }
+
+/* Cuestionarios */
+.path-mod-quiz .qnbutton .thispageholder .qnbutton.qnbutton:hover { background: mix($uam-primary, #fff, 15%); }
+.path-mod-quiz .qnbutton .qnbutton.flagged { border-color: var(--uam-primary); }
+
+/* Notificaciones y mensajes */
+.toast-info { border-left: .25rem solid var(--uam-primary); }
+.message-app .conversations .conversation .name { color: var(--uam-primary); }
+
+/* Formularios: switches y checkboxes */
+.custom-control-input:checked ~ .custom-control-label::before {
+  color: #fff;
+  border-color: var(--uam-primary);
+  background-color: var(--uam-primary);
+}
+
+/* Footer widgets / enlaces */
+#page-footer .list-unstyled li a { text-decoration: none; }
+#page-footer .list-unstyled li a:hover { text-decoration: underline; }
 
 SCSS;
 
