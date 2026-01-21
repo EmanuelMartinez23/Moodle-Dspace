@@ -452,6 +452,124 @@ body:not(.pagelayout-login):not(.pagelayout-popup):not(.pagelayout-embedded) #pa
 /* Footer con separación superior más marcada */
 #page-footer { border-top: 4px solid mix($uam-primary, #000, 30%); }
 
+/* ==========================================================
+   Mejora creativa adicional para reducir zonas en blanco
+   y dar más carácter visual manteniendo AA
+   ========================================================== */
+
+/* Encabezados con subrayado/acento sutil en el contenido principal */
+#region-main h1, #region-main h2, #region-main h3 {
+  position: relative;
+  padding-bottom: .25rem;
+  background-image: linear-gradient(to right, rgba(173,37,168,.55), rgba(173,37,168,0));
+  background-repeat: no-repeat;
+  background-size: 40% 3px;
+  background-position: left calc(100% + 2px);
+}
+
+/* Separadores con color institucional */
+hr {
+  border: 0;
+  height: 2px;
+  background: linear-gradient(to right, rgba(173,37,168,.45), rgba(173,37,168,0));
+  opacity: 1;
+}
+
+/* Hero más alto en frontpage y dashboard usando la cabecera de contexto ya existente */
+.path-site .page-context-header,
+.path-my .page-context-header {
+  min-height: 180px;
+  padding: 2rem 1.25rem;
+  display: flex;
+  align-items: center;
+}
+.path-site .page-context-header .page-header-headings h1,
+.path-my .page-context-header .page-header-headings h1 {
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+.path-site .page-context-header .btn,
+.path-my .page-context-header .btn {
+  border-radius: .45rem;
+}
+
+/* Secciones del curso con panel suave y borde izquierdo UAM */
+.course-content .section,
+.format-tiles .tile,
+.format-topics .section,
+.format-weeks .section {
+  background: rgba(173,37,168,.02);
+  border-left: 4px solid var(--uam-primary);
+  border-radius: .5rem;
+  padding: .75rem 1rem;
+  margin-bottom: .85rem;
+}
+.course-content .section .sectionname {
+  color: var(--uam-gray-900);
+}
+.course-content .section .summary,
+.course-content .section .content {
+  color: var(--uam-gray-900);
+}
+
+/* Actividades: resaltar hover del renglón y acciones */
+.activity-item { transition: background-color .15s ease, box-shadow .15s ease; }
+.activity-item:hover {
+  background: mix($uam-primary, #fff, 96%);
+  box-shadow: 0 6px 14px rgba(0,0,0,.06);
+}
+.activity-item .actions .btn-link,
+.activity-item .activity-badges .badge {
+  color: var(--uam-primary);
+}
+
+/* Login: overlay sutil para mejorar legibilidad de la tarjeta */
+body.pagelayout-login #page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,.08);
+}
+
+/* Botones outline con colores UAM */
+.btn-outline-primary {
+  color: var(--uam-primary);
+  border-color: var(--uam-primary);
+}
+.btn-outline-primary:hover { background: var(--uam-primary); color: #fff; }
+
+/* Tablas con zebra striping accesible */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-accent-bg: rgba(173,37,168,.03);
+  color: inherit;
+}
+
+/* Estados vacíos comunes como tarjetas ilustradas */
+.empty-placeholder, .noitems, .norecords, .no-content {
+  border: 2px dashed mix($uam-primary, #000, 25%);
+  background: mix($uam-primary, #fff, 97%);
+  border-radius: .75rem;
+  padding: 1rem;
+}
+.empty-placeholder::before, .noitems::before, .norecords::before, .no-content::before {
+  content: '';
+  display: block;
+  width: 120px; height: 28px;
+  margin: .25rem auto .75rem;
+  background: url('[[pix:theme|uam-logo]]') no-repeat center/contain;
+  opacity: .55;
+}
+
+/* Píldoras de estado y progreso más suaves */
+.badge.rounded-pill { padding: .45rem .65rem; }
+.progress { background: mix($uam-primary, #fff, 98%); }
+
+/* Ajustes responsive adicionales */
+@media (max-width: 767.98px) {
+  .path-site .page-context-header, .path-my .page-context-header { min-height: 140px; padding: 1.25rem 1rem; }
+  #region-main h1, #region-main h2, #region-main h3 { background-size: 60% 3px; }
+}
+
 SCSS;
 
     return $scss;
