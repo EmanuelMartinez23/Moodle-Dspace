@@ -125,10 +125,10 @@ table.table tbody tr:hover {
   background: mix($uam-gray-100, #fff, 50%);
 }
 
-/* Navbar / Header */
+/* Navbar / Header – morado UAM con texto blanco */
 .navbar,
 .primary-navigation {
-  background-color: var(--uam-black) !important;
+  background-color: var(--uam-primary) !important;
 }
 .navbar .navbar-brand,
 .navbar .navbar-brand a,
@@ -138,8 +138,11 @@ table.table tbody tr:hover {
 }
 .navbar .navbar-nav .nav-link:hover,
 .navbar .navbar-nav .nav-link:focus {
-  color: mix($uam-white, $uam-primary, 75%) !important;
+  color: mix($uam-white, $uam-black, 15%) !important; /* Un blanco ligeramente atenuado para hover */
 }
+/* Toggler en móvil visible sobre fondo morado */
+.navbar .navbar-toggler { color: #fff; border-color: rgba(255,255,255,.55); }
+.navbar .navbar-toggler-icon { filter: invert(1) brightness(2); }
 
 /* Logo institucional en navbar (cuando aplique) */
 /* Logo institucional: aplicar también directamente al elemento para mayor compatibilidad */
@@ -355,15 +358,20 @@ label, .form-label { color: var(--uam-gray-900); }
    Ampliación de diseño UAM Lerma para TODAS las páginas
    ========================================================== */
 
-/* Fondo institucional en todo el sitio (excepto popup/embedded) */
+/* Fondo institucional en todo el sitio */
 html,
-body {
-  background: url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
-  background-size: cover !important;
-}
-/* Incluir también popups/embedded: no queremos fondo blanco en ningún lado */
-.pagelayout-popup html, .pagelayout-popup body,
-.pagelayout-embedded html, .pagelayout-embedded body {
+body,
+body.pagelayout-standard,
+body.pagelayout-course,
+body.pagelayout-incourse,
+body.pagelayout-frontpage,
+body.pagelayout-mydashboard,
+body.pagelayout-mycourses,
+body.pagelayout-admin,
+body.pagelayout-report,
+body.pagelayout-secure,
+body.pagelayout-popup,
+body.pagelayout-embedded {
   background: url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
   background-size: cover !important;
 }
@@ -440,9 +448,7 @@ body {
 .path-calendar .calendar_event_course { background: mix($uam-primary, #fff, 90%); }
 
 /* Mensajería */
-.message-app .navbar, .message-app .header-container {
-  background: #000;
-}
+.message-app .navbar, .message-app .header-container { background: var(--uam-primary); color: #fff; }
 .message-app .conversations .conversation.active {
   background: rgba(173,37,168,.12);
 }
@@ -671,7 +677,15 @@ $navbar-dark-hover-color: mix(#ffffff, $primary, 75%);
 $navbar-dark-active-color: $navbar-dark-hover-color;
 $navbar-dark-brand-color: #ffffff;
 $navbar-dark-brand-hover-color: $navbar-dark-hover-color;
-$navbar-dark-bg: #000000;
+$navbar-dark-bg: $primary;
+
+// En caso de que Boost use la variante "light", forzar también el fondo morado y texto blanco
+$navbar-light-bg: $primary;
+$navbar-light-color: #ffffff;
+$navbar-light-hover-color: mix(#ffffff, $primary, 15%);
+$navbar-light-active-color: #ffffff;
+$navbar-light-brand-color: #ffffff;
+$navbar-light-brand-hover-color: #ffffff;
 
 // Botones
 $btn-focus-width: .25rem;
