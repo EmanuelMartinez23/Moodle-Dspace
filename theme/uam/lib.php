@@ -325,7 +325,132 @@ label, .form-label { color: var(--uam-gray-900); }
 
 /* Footer widgets / enlaces */
 #page-footer .list-unstyled li a { text-decoration: none; }
-#page-footer .list-unstyled li a:hover { text-decoration: underline; }
+  #page-footer .list-unstyled li a:hover { text-decoration: underline; }
+
+/* ==========================================================
+   Ampliación de diseño UAM Lerma para TODAS las páginas
+   ========================================================== */
+
+/* Fondo institucional sutil en todo el sitio (excepto login y popup/embedded) */
+body:not(.pagelayout-login):not(.pagelayout-popup):not(.pagelayout-embedded) #page {
+  background-image:
+    linear-gradient(rgba(173, 37, 168, .03), rgba(173, 37, 168, .03)),
+    url('[[pix:theme|fondo-uam]]');
+  background-size: auto, cover;
+  background-attachment: fixed, fixed;
+  background-position: center, center;
+}
+
+/* Cabecera de página / contexto (curso, perfil, etc.) */
+.page-context-header {
+  background: linear-gradient(90deg, rgba(0,0,0,.85), rgba(0,0,0,.65)), url('[[pix:theme|fondo-uam]]') center/cover no-repeat;
+  border-radius: .5rem;
+}
+.page-context-header .page-header-headings h1,
+.page-context-header .page-header-headings h2,
+.page-context-header .page-header-headings .page-header-headings-title {
+  color: #fff;
+}
+.page-context-header .btn-link { color: mix(#fff, $uam-primary, 30%); }
+
+/* Marca de agua del logo en cabeceras anchas */
+.page-context-header::after {
+  content: '';
+  position: absolute;
+  inset: auto 1rem 1rem auto;
+  width: 120px; height: 28px;
+  background: url('[[pix:theme|uam-logo]]') no-repeat center/contain;
+  opacity: .35;
+  pointer-events: none;
+}
+
+/* Frontpage y dashboard: tarjetas de cursos más vivas */
+.path-site #page .coursebox, .path-my .coursebox,
+.path-my .block_myoverview .card, .path-my .block .card {
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: 0 8px 18px rgba(0,0,0,.06);
+}
+.path-site .coursebox .course-title a,
+.path-my .block_myoverview .coursename a { color: var(--uam-primary); }
+
+/* Gradebook (libro de calificaciones) */
+.path-grade-report .gradereporttable thead th {
+  background: var(--uam-gray-100);
+  color: var(--uam-gray-900);
+  border-bottom: 2px solid mix($uam-primary, #fff, 60%);
+}
+.path-grade-report .gradereporttable tbody tr:hover td {
+  background: mix($uam-primary, #fff, 96%);
+}
+.path-grade-report .gradereporttable .highlight, 
+.path-grade-report-grader .gradeparent .highlight {
+  outline: 2px solid rgba(173,37,168,.35);
+  outline-offset: -2px;
+}
+
+/* Calendario */
+.path-calendar .calendarmonth td.today .day-number {
+  background: var(--uam-primary);
+  color: #fff;
+  border-radius: .25rem;
+}
+.path-calendar .eventlist .event .name a { color: var(--uam-primary); }
+.path-calendar .calendar_event_course { background: mix($uam-primary, #fff, 90%); }
+
+/* Mensajería */
+.message-app .navbar, .message-app .header-container {
+  background: #000;
+}
+.message-app .conversations .conversation.active {
+  background: rgba(173,37,168,.12);
+}
+.message-app .message.send .content {
+  background: mix($uam-primary, #fff, 20%);
+}
+
+/* Perfil de usuario */
+.path-user .userprofile .profile_tree h3 {
+  border-left: 4px solid var(--uam-primary);
+  padding-left: .5rem;
+}
+.path-user .profile_tree .contentnode a { color: var(--uam-primary); }
+
+/* Administración: tablas y formularios */
+.path-admin table.generaltable thead th {
+  background: var(--uam-gray-100);
+}
+.path-admin .mform .fitem .fitemtitle label { color: var(--uam-gray-900); }
+.path-admin .settingsform .form-submit .btn-primary { background: var(--uam-primary); border-color: var(--uam-primary); }
+
+/* Paginación (refuerzo) */
+.pagination .page-item.active .page-link {
+  background: var(--uam-primary);
+  border-color: var(--uam-primary);
+  color: #fff;
+}
+.pagination .page-link:hover { color: var(--uam-primary); }
+
+/* Barras de progreso */
+.progress-bar { background-color: var(--uam-primary); }
+
+/* Tags/etiquetas */
+.tag, .badge.bg-info, .badge.bg-secondary { border-radius: .35rem; }
+.tag a, .badge a { color: inherit; }
+
+/* Actividades específicas (Assign, Quiz, Forum ya cubiertos en parte) */
+.path-mod-assign .submissionstatustable th { background: var(--uam-gray-100); }
+.path-mod-assign .gradingtable tbody tr:hover td { background: mix($uam-primary, #fff, 96%); }
+.path-mod-forum .discussion .starter .subject a { color: var(--uam-primary); }
+.path-mod-quiz .quiznavigation .qnbutton.thispage { border-color: var(--uam-primary); }
+
+/* Navegación secundaria y course index (refuerzos) */
+.secondary-navigation .nav-link:hover { color: darken($uam-primary, 8%); }
+.courseindex .courseindex-item .courseindex-link:hover {
+  background: rgba(173,37,168,.08);
+}
+
+/* Footer con separación superior más marcada */
+#page-footer { border-top: 4px solid mix($uam-primary, #000, 30%); }
 
 SCSS;
 
@@ -347,6 +472,12 @@ $secondary: #495057;
 $body-color: #212529;
 $link-color: $primary;
 
+// Colores adicionales de estado (mantener accesibilidad)
+$success: #198754;
+$info: #0dcaf0;
+$warning: #ffc107;
+$danger: #dc3545;
+
 // Navbar oscuro institucional
 $navbar-dark-color: #ffffff;
 $navbar-dark-hover-color: mix(#ffffff, $primary, 75%);
@@ -358,6 +489,27 @@ $navbar-dark-bg: #000000;
 // Botones
 $btn-focus-width: .25rem;
 $btn-focus-box-shadow: 0 0 0 .25rem rgba(173, 37, 168, .25);
+
+// Paginación
+$pagination-color: $body-color;
+$pagination-hover-color: $primary;
+$pagination-active-color: #fff;
+$pagination-active-bg: $primary;
+$pagination-active-border-color: $primary;
+
+// Progress bar y badges
+$progress-bar-bg: $primary;
+$badge-color: #fff;
+$badge-bg: $primary;
+$badge-border-radius: .35rem;
+
+// Tabs
+$nav-tabs-link-active-color: $primary;
+$nav-tabs-link-hover-border-color: mix($primary, #fff, 60%) mix($primary, #fff, 60%) transparent;
+
+// Breadcrumb
+$breadcrumb-divider-color: $secondary;
+$breadcrumb-active-color: $secondary;
 SCSS;
 
     return $prescss;
