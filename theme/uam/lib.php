@@ -53,6 +53,10 @@ $uam-gray-900: #212529;
 $uam-gray-700: #495057;
 $uam-gray-100: #f8f9fa;
 
+/* Superficies base para modo oscuro (definir antes de cualquier uso) */
+$uam-surface-dark: lighten($uam-gray-900, 6%);
+$uam-surface-darker: lighten($uam-gray-900, 2%);
+
 /* Tipografía general: mejorar legibilidad en base oscura */
 body {
   color: #e9ecef;
@@ -371,7 +375,10 @@ body.pagelayout-admin,
 body.pagelayout-report,
 body.pagelayout-secure,
 body.pagelayout-popup,
-body.pagelayout-embedded {
+body.pagelayout-embedded,
+body.pagelayout-maintenance,
+body.pagelayout-print,
+body.pagelayout-redirect {
   background-color: #2b2f33 !important;
   background-image: none !important;
 }
@@ -592,8 +599,6 @@ body.pagelayout-login #page::before {
 .btn-outline-primary:hover { background: var(--uam-primary); color: #fff; }
 
 /* Superficies (modo oscuro): evitar blanco liso, usar grises oscuros accesibles */
-$uam-surface-dark: lighten($uam-gray-900, 6%);
-$uam-surface-darker: lighten($uam-gray-900, 2%);
 
 .card,
 .block.card,
@@ -607,6 +612,17 @@ $uam-surface-darker: lighten($uam-gray-900, 2%);
 .card .card-header { background-color: $uam-surface-darker; color: #fff; }
 .bg-white { background-color: $uam-surface-dark !important; }
 .bg-light, .bg-body, .bg-body-tertiary { background-color: $uam-surface-dark !important; }
+
+/* Diálogos clásicos de Moodle */
+.moodle-dialogue,
+.moodle-dialogue .moodle-dialogue-wrap { background-color: $uam-surface-dark; color: #f1f3f5; }
+.moodle-dialogue .moodle-dialogue-hd { background-color: $uam-surface-darker; color: #fff; border-bottom: 1px solid rgba(255,255,255,.15); }
+.moodle-dialogue .moodle-dialogue-bd { background-color: $uam-surface-dark; color: #f1f3f5; }
+
+/* Drawer de mensajería */
+.message-app .drawer,
+.message-app .drawer .drawercontent { background-color: $uam-surface-dark; }
+.message-app .drawer .list-group .list-group-item { background-color: transparent; color: #e9ecef; }
 
 /* Campos de formulario en modo oscuro */
 input.form-control,
