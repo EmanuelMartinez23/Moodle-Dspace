@@ -375,7 +375,7 @@ label, .form-label { color: #f1f3f5; }
    Ampliación de diseño UAM Lerma para TODAS las páginas
    ========================================================== */
 
-/* Fondo gris oscuro en todo el sitio (excepto login) */
+/* Fondo institucional en TODO el sitio (incluye todas las pagelayouts) */
 html,
 body,
 body.pagelayout-standard,
@@ -392,8 +392,10 @@ body.pagelayout-embedded,
 body.pagelayout-maintenance,
 body.pagelayout-print,
 body.pagelayout-redirect {
+  background: url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
+  background-size: cover !important;
+  /* Color de respaldo por si la imagen no carga */
   background-color: #2b2f33 !important;
-  background-image: none !important;
 }
 /* Asegurar transparencia de contenedores base para que se vea el fondo */
 #page,
