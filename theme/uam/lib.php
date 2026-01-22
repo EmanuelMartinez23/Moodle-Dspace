@@ -53,9 +53,9 @@ $uam-gray-900: #212529;
 $uam-gray-700: #495057;
 $uam-gray-100: #f8f9fa;
 
-/* Tipografía general: mejorar legibilidad */
+/* Tipografía general: mejorar legibilidad en base oscura */
 body {
-  color: var(--uam-gray-900);
+  color: #e9ecef;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -219,8 +219,8 @@ body.pagelayout-login .login-container .login-logo img {
 }
 .block.card .card-header,
 .card .card-header {
-  background: var(--uam-gray-100);
-  color: var(--uam-gray-900);
+  background: transparent;
+  color: #f1f3f5;
 }
 
 /* Índice del curso y navegación secundaria */
@@ -253,8 +253,8 @@ body.pagelayout-login .login-container .login-logo img {
 }
 
 /* Formularios: labels y ayudas */
-label, .form-label { color: var(--uam-gray-900); }
-.form-text { color: var(--uam-gray-700); }
+label, .form-label { color: #f1f3f5; }
+.form-text { color: #ced4da; }
 
 /* Cursos: tarjetas en vista de cursos */
 .coursebox, .course-card {
@@ -266,7 +266,7 @@ label, .form-label { color: var(--uam-gray-900); }
 
 /* Breadcrumbs */
 .breadcrumb .breadcrumb-item a { color: var(--uam-primary); }
-.breadcrumb .breadcrumb-item.active { color: var(--uam-gray-700); }
+.breadcrumb .breadcrumb-item.active { color: #ced4da; }
 
 /* Responsive */
 @media (max-width: 991.98px) {
@@ -358,7 +358,7 @@ label, .form-label { color: var(--uam-gray-900); }
    Ampliación de diseño UAM Lerma para TODAS las páginas
    ========================================================== */
 
-/* Fondo institucional en todo el sitio */
+/* Fondo gris oscuro en todo el sitio (excepto login) */
 html,
 body,
 body.pagelayout-standard,
@@ -372,8 +372,8 @@ body.pagelayout-report,
 body.pagelayout-secure,
 body.pagelayout-popup,
 body.pagelayout-embedded {
-  background: url('[[pix:theme|fondo-uam]]') no-repeat center center fixed !important;
-  background-size: cover !important;
+  background-color: #2b2f33 !important;
+  background-image: none !important;
 }
 /* Asegurar transparencia de contenedores base para que se vea el fondo */
 #page,
@@ -393,7 +393,7 @@ body.pagelayout-embedded {
 
 /* Cabecera de página / contexto (curso, perfil, etc.) */
 .page-context-header {
-  background: linear-gradient(90deg, rgba(0,0,0,.85), rgba(0,0,0,.65)), url('[[pix:theme|fondo-uam]]') center/cover no-repeat;
+  background: linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.35));
   border-radius: .5rem;
 }
 .page-context-header .page-header-headings h1,
@@ -425,12 +425,12 @@ body.pagelayout-embedded {
 
 /* Gradebook (libro de calificaciones) */
 .path-grade-report .gradereporttable thead th {
-  background: var(--uam-gray-100);
-  color: var(--uam-gray-900);
-  border-bottom: 2px solid mix($uam-primary, #fff, 60%);
+  background: $uam-surface-darker;
+  color: #ffffff;
+  border-bottom: 2px solid mix($uam-primary, #000, 60%);
 }
 .path-grade-report .gradereporttable tbody tr:hover td {
-  background: mix($uam-primary, #fff, 96%);
+  background: rgba(255,255,255,.05);
 }
 .path-grade-report .gradereporttable .highlight, 
 .path-grade-report-grader .gradeparent .highlight {
@@ -465,9 +465,10 @@ body.pagelayout-embedded {
 
 /* Administración: tablas y formularios */
 .path-admin table.generaltable thead th {
-  background: var(--uam-gray-100);
+  background: $uam-surface-darker;
+  color: #fff;
 }
-.path-admin .mform .fitem .fitemtitle label { color: var(--uam-gray-900); }
+.path-admin .mform .fitem .fitemtitle label { color: #f1f3f5; }
 .path-admin .settingsform .form-submit .btn-primary { background: var(--uam-primary); border-color: var(--uam-primary); }
 
 /* Paginación (refuerzo) */
@@ -486,8 +487,8 @@ body.pagelayout-embedded {
 .tag a, .badge a { color: inherit; }
 
 /* Actividades específicas (Assign, Quiz, Forum ya cubiertos en parte) */
-.path-mod-assign .submissionstatustable th { background: var(--uam-gray-100); }
-.path-mod-assign .gradingtable tbody tr:hover td { background: mix($uam-primary, #fff, 96%); }
+.path-mod-assign .submissionstatustable th { background: $uam-surface-darker; color: #fff; }
+.path-mod-assign .gradingtable tbody tr:hover td { background: rgba(255,255,255,.05); }
 .path-mod-assign .submissionstatustable caption,
 .path-mod-assign h2, .path-mod-assign h3 {
   color: var(--uam-primary);
@@ -557,18 +558,18 @@ hr {
   margin-bottom: .85rem;
 }
 .course-content .section .sectionname {
-  color: var(--uam-gray-900);
+  color: #f1f3f5;
 }
 .course-content .section .summary,
 .course-content .section .content {
-  color: var(--uam-gray-900);
+  color: #e9ecef;
 }
 
 /* Actividades: resaltar hover del renglón y acciones */
 .activity-item { transition: background-color .15s ease, box-shadow .15s ease; }
 .activity-item:hover {
-  background: mix($uam-primary, #fff, 96%);
-  box-shadow: 0 6px 14px rgba(0,0,0,.06);
+  background: rgba(255,255,255,.05);
+  box-shadow: 0 6px 14px rgba(0,0,0,.2);
 }
 .activity-item .actions .btn-link,
 .activity-item .activity-badges .badge {
@@ -590,38 +591,66 @@ body.pagelayout-login #page::before {
 }
 .btn-outline-primary:hover { background: var(--uam-primary); color: #fff; }
 
-/* Superficies (evitar blanco liso): usar tintes del primario */
+/* Superficies (modo oscuro): evitar blanco liso, usar grises oscuros accesibles */
+$uam-surface-dark: lighten($uam-gray-900, 6%);
+$uam-surface-darker: lighten($uam-gray-900, 2%);
+
 .card,
 .block.card,
 .dropdown-menu,
 .modal-content,
 .popover,
 .toast {
-  background-color: mix($uam-primary, #fff, 96%);
+  background-color: $uam-surface-dark;
+  color: #f1f3f5;
 }
-.bg-white { background-color: mix($uam-primary, #fff, 97%) !important; }
-.bg-light, .bg-body, .bg-body-tertiary { background-color: mix($uam-primary, #fff, 97%) !important; }
+.card .card-header { background-color: $uam-surface-darker; color: #fff; }
+.bg-white { background-color: $uam-surface-dark !important; }
+.bg-light, .bg-body, .bg-body-tertiary { background-color: $uam-surface-dark !important; }
 
-/* Campos de formulario sin blanco puro */
+/* Campos de formulario en modo oscuro */
 input.form-control,
 textarea.form-control,
 select.form-select,
 .form-control,
 .form-select {
-  background-color: mix($uam-primary, #fff, 97%);
-  color: var(--uam-gray-900);
+  background-color: $uam-surface-darker;
+  color: #f1f3f5;
+  border-color: rgba(255,255,255,.15);
+}
+::placeholder { color: rgba(255,255,255,.6) !important; }
+
+/* Tablas en modo oscuro */
+table.table thead th { background-color: $uam-surface-darker; color: #fff; }
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-accent-bg: rgba(255,255,255,.03);
+  color: #e9ecef;
+}
+.table tbody tr:hover > * { background-color: rgba(255,255,255,.05); }
+
+/* Asegurar texto blanco sobre superficies rosas (primario) */
+.bg-primary, .btn-primary, .badge.bg-primary, .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+  color: #fff !important;
 }
 
-/* Tablas con zebra striping accesible */
-.table-striped > tbody > tr:nth-of-type(odd) > * {
-  --bs-table-accent-bg: rgba(173,37,168,.03);
-  color: inherit;
+/* Pestañas en modo oscuro */
+.nav-tabs .nav-link {
+  color: #ced4da;
+  background-color: transparent;
+  border-color: rgba(255,255,255,.15);
 }
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+  color: #fff;
+  background-color: $uam-surface-darker;
+  border-color: var(--uam-primary) var(--uam-primary) transparent;
+}
+.nav-tabs .nav-link:hover { color: #fff; border-color: rgba(255,255,255,.35); }
 
 /* Estados vacíos comunes como tarjetas ilustradas */
 .empty-placeholder, .noitems, .norecords, .no-content {
-  border: 2px dashed mix($uam-primary, #000, 25%);
-  background: mix($uam-primary, #fff, 97%);
+  border: 2px dashed rgba(255,255,255,.2);
+  background: rgba(255,255,255,.05);
   border-radius: .75rem;
   padding: 1rem;
 }
@@ -636,7 +665,7 @@ select.form-select,
 
 /* Píldoras de estado y progreso más suaves */
 .badge.rounded-pill { padding: .45rem .65rem; }
-.progress { background: mix($uam-primary, #fff, 98%); }
+.progress { background: rgba(255,255,255,.08); }
 
 /* Ajustes responsive adicionales */
 @media (max-width: 767.98px) {
@@ -661,7 +690,7 @@ function theme_uam_get_pre_scss($theme): string {
 // Variables Bootstrap/Boost sobreescritas por UAM Lerma
 $primary: #AD25A8;
 $secondary: #495057;
-$body-color: #212529;
+$body-color: #e9ecef; // Texto claro para base oscura
 $body-bg: transparent; // Evita fondo blanco por defecto en todo el sitio
 $link-color: $primary;
 
@@ -716,17 +745,17 @@ $breadcrumb-active-color: $secondary;
 $loginbackground-gradient-from: transparent;
 $loginbackground-gradient-to: transparent;
 
-// Evitar blancos en superficies por defecto de Bootstrap
-$card-bg: mix($primary, #fff, 96%);
-$dropdown-bg: mix($primary, #fff, 96%);
-$modal-content-bg: mix($primary, #fff, 96%);
-$popover-bg: mix($primary, #fff, 96%);
-$toast-background-color: mix($primary, #fff, 96%);
-$input-bg: mix($primary, #fff, 97%);
-$form-select-bg: mix($primary, #fff, 97%);
+// Modo oscuro por defecto para superficies nativas de Bootstrap
+$card-bg: lighten(#212529, 6%);
+$dropdown-bg: lighten(#212529, 6%);
+$modal-content-bg: lighten(#212529, 6%);
+$popover-bg: lighten(#212529, 6%);
+$toast-background-color: lighten(#212529, 6%);
+$input-bg: lighten(#212529, 2%);
+$form-select-bg: lighten(#212529, 2%);
 $table-bg: transparent;
-$table-striped-bg: rgba(173, 37, 168, .03);
-$table-hover-bg: mix($primary, #fff, 96%);
+$table-striped-bg: rgba(255, 255, 255, .03);
+$table-hover-bg: rgba(255, 255, 255, .05);
 SCSS;
 
     return $prescss;
