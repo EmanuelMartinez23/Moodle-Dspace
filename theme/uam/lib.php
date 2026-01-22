@@ -137,8 +137,18 @@ table.table tbody tr:hover {
 .navbar .navbar-brand,
 .navbar .navbar-brand a,
 .navbar .navbar-nav .nav-link,
-.primary-navigation .nav-link {
+.primary-navigation .nav-link,
+/* Forzar el título de sitio a blanco sobre fondo morado */
+.navbar .site-name,
+.navbar .sitename,
+.navbar .navbar-brand .site-name,
+.navbar .brand .site-name {
   color: var(--uam-white) !important;
+}
+.navbar.bg-white,
+.navbar.bg-light,
+.navbar.navbar-light {
+  background-color: var(--uam-primary) !important;
 }
 .navbar .navbar-nav .nav-link:hover,
 .navbar .navbar-nav .nav-link:focus {
@@ -154,7 +164,8 @@ table.table tbody tr:hover {
   position: relative;
   min-height: 32px;
   padding-left: 120px; /* deja espacio para el logo */
-  background: url('[[pix:theme|uam-logo]]') no-repeat left center / 112px 28px;
+  background: url('[[pix:theme|uam-logo]]') no-repeat left 12px center / 112px 28px;
+  background-color: transparent !important; /* evitar bloques blancos debajo del título */
 }
 .navbar .navbar-brand::before {
   content: '';
@@ -163,6 +174,8 @@ table.table tbody tr:hover {
   margin-right: .75rem;
   background: url('[[pix:theme|uam-logo]]') no-repeat center/contain;
 }
+.navbar .navbar-brand img { display: none; } /* ocultar logo por defecto para no duplicar */
+.navbar .navbar-brand, .navbar .navbar-brand a { background-color: transparent !important; }
 
 /* Footer */
 #page-footer,
@@ -623,6 +636,47 @@ body.pagelayout-login #page::before {
 .message-app .drawer,
 .message-app .drawer .drawercontent { background-color: $uam-surface-dark; }
 .message-app .drawer .list-group .list-group-item { background-color: transparent; color: #e9ecef; }
+
+/* ==========================================================
+   Menús desplegables y selects: opciones en fondo BLANCO
+   (mejor legibilidad en menús de Perfil, Idioma, Acción, etc.)
+   ========================================================== */
+/* Menús genéricos */
+.dropdown-menu,
+.menu .dropdown-menu,
+.usermenu .dropdown-menu,
+.moodle-actionmenu .menu .dropdown-menu,
+.login-languagemenu .dropdown-menu {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border-color: rgba(0,0,0,.15) !important;
+}
+.dropdown-item {
+  color: #212529 !important;
+}
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background: mix($uam-primary, #fff, 92%) !important;
+  color: #212529 !important;
+}
+.dropdown-item.active,
+.dropdown-item:active {
+  background: mix($uam-primary, #fff, 85%) !important;
+  color: #212529 !important;
+}
+
+/* Selects nativos: intentar forzar opciones en blanco (según soporte del navegador) */
+select option,
+.form-select option {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+}
+/* Mantener control legible en oscuro, pero con menú de opciones blanco cuando se despliega */
+.form-select,
+select.form-select,
+select.form-control {
+  color: #f1f3f5;
+}
 
 /* Campos de formulario en modo oscuro */
 input.form-control,
