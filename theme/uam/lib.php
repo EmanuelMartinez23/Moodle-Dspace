@@ -27,7 +27,7 @@ function theme_uam_get_extra_scss($theme): string {
     $scss = <<<'SCSS'
 /*
  UAM Lerma – Identidad visual para Moodle 4.4
- Colores institucionales como variables CSS (utilizables por administradores y para estados):
+ Colores institucionales como variables CSS:
 */
 :root {
   --uam-lerma: #AD25A8;

@@ -28,14 +28,12 @@ require_once(__DIR__ . '/lib.php');
 $THEME = new stdClass();
 $THEME->name = 'uam';
 
-// Inherit everything from Boost.
 $THEME->parents = ['boost'];
 
 $THEME->sheets = ['uam'];
 $THEME->editor_sheets = [];
 $THEME->editor_scss = ['editor'];
 
-// Use Boost SCSS pipeline and inject our extra SCSS customisations.
 $THEME->scss = function($theme) {
     return theme_boost_get_main_scss_content($theme);
 };
@@ -43,7 +41,6 @@ $THEME->scss = function($theme) {
 $THEME->prescsscallback = 'theme_uam_get_pre_scss';
 $THEME->extrascsscallback = 'theme_uam_get_extra_scss';
 
-// Keep Boost layouts and behaviours via parent.
 $THEME->usefallback = true;
 $THEME->yuicssmodules = [];
 $THEME->rendererfactory = 'theme_overridden_renderer_factory';
@@ -53,7 +50,6 @@ $THEME->iconsystem = \core\output\icon_system::FONTAWESOME;
 $THEME->haseditswitch = true;
 $THEME->usescourseindex = true;
 
-// Activity header: hide title by default like Boost.
 $THEME->activityheaderconfig = [
     'notitle' => true
 ];

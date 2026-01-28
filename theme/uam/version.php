@@ -25,6 +25,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin = new stdClass();
-$plugin->version   = 2026012114; // YYYYMMDDXX.
-$plugin->requires  = 2024041600; // Moodle 4.4 minimum.
+$plugin->version   = 2026012114;
+$plugin->requires  = 2024041600;
 $plugin->component = 'theme_uam';
